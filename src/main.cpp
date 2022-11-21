@@ -4,9 +4,7 @@
 ESP32MotorControl MotorControl = ESP32MotorControl();
 
 // Initialize NeoPixel Led if defined
-#ifdef NEOPIXEL
-Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL, NEO_GRB + NEO_KHZ800);
-#endif // ifdef NEOPIXEL
+Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL, NEO_RGB + NEO_KHZ800);
 
 // Timer & Mutex for encoders and PID counters
 hw_timer_t  *timer      = NULL;
@@ -19,6 +17,7 @@ PID pidright(&Setpoint, &enc_readR, &val_outputR, kp, ki, kd);
 
 void Encoders_Interrupt(void)
 {
+  DEBUG_PRINTLN("exc Encoders_Interrupt fct");
   byte next_state, table_input;
 
   // Encoder 1
@@ -40,6 +39,7 @@ void Encoders_Interrupt(void)
 
 void IRAM_ATTR onTimer()
 {
+  DEBUG_PRINTLN("exc onTimer fct");
   portENTER_CRITICAL_ISR(&timerMux);
   Encoders_Interrupt();
   portEXIT_CRITICAL_ISR(&timerMux);
@@ -47,6 +47,7 @@ void IRAM_ATTR onTimer()
 
 void startTimer()
 {
+  DEBUG_PRINTLN("exc startTimer fct");
   if (timer == NULL) {
     timer = timerBegin(2, 4000, true);
     timerAttachInterrupt(timer, &onTimer, true);
@@ -57,6 +58,7 @@ void startTimer()
 
 void stopTimer()
 {
+  DEBUG_PRINTLN("exc stopTimer fct");
   if (timer != NULL) {
     timerAlarmDisable(timer);
     timerDetachInterrupt(timer);
@@ -69,34 +71,24 @@ void stopTimer()
 
 void setLed(int r, int g, int b)
 {
-    #ifdef NEOPIXEL
+  DEBUG_PRINTLN("exc setED fct");
   pixels.setPixelColor(0, pixels.Color(r, g, b));
   pixels.show();
-    #else // ifdef NEOPIXEL
-
-  if (r > 0) r = 1;
-
-  if (g > 0) g = 1;
-
-  if (b > 0) b = 1;
-  digitalWrite(RED,   r);
-  digitalWrite(GREEN, g);
-  digitalWrite(BLUE,  b);
-    #endif // ifdef NEOPIXEL
 }
 
 void read_cmd_buttons()
 {
-  button_red.loop();
+  DEBUG_PRINTLN("exc read_cmd_buttons fct");
+  button_left.loop();
 
-  if (button_red.isPressed()) {
+  if (button_left.isPressed()) {
     mov                      = TURN_LEFT;
     recorded_button[nr_comm] = mov;
     nr_comm++;
   }
-  button_blue.loop();
+  button_forwards.loop();
 
-  if (button_blue.isPressed()) {
+  if (button_forwards.isPressed()) {
     mov = FORWARD;
 
     if (mov != 0) {
@@ -105,9 +97,9 @@ void read_cmd_buttons()
     }
     mov = 0;
   }
-  button_green.loop();
+  button_right.loop();
 
-  if (button_green.isPressed()) {
+  if (button_right.isPressed()) {
     mov = TURN_RIGHT;
 
     if (mov != 0) {
@@ -116,9 +108,9 @@ void read_cmd_buttons()
     }
     mov = 0;
   }
-  button_yellow_bottom.loop();
+  button_backwards.loop();
 
-  if (button_yellow_bottom.isPressed()) {
+  if (button_backwards.isPressed()) {
     mov = BACKWARD;
 
     if (mov != 0) {
@@ -129,15 +121,17 @@ void read_cmd_buttons()
   }
 } // read_cmd_buttons
 
-void odometry()
-{}
+void odometry(){
+  DEBUG_PRINTLN("exc odomety fct");
+}
 
 void init(void)
 {
+  DEBUG_PRINTLN("exc init fct");
   setLed(0, 0, 255); // set blue
 
   if (y_count > 3) {
-    button_yellow_left.resetCount();
+    button_command.resetCount();
   } // reset
 
   if (y_count == 1) {
@@ -155,6 +149,7 @@ void init(void)
 
 void readComm(void)
 {
+  DEBUG_PRINTLN("exc readComm fct");
   setLed(255, 0, 0);               // red
 
   if (nr_comm < MAX_NR_COMMANDS) { // it only keeps the first max_nr_commands...
@@ -169,17 +164,18 @@ void readComm(void)
 
 void startExec(void)
 {
+  DEBUG_PRINTLN("exc startExec fct");
   setLed(0, 255, 0); // green
-  button_blue.loop();
+  button_forwards.loop();
 
   if (y_count > 2) {
     if (on_execute_comm_st == 1) {
-      button_yellow_left.resetCount();
+      button_command.resetCount();
     }
     machine_state = INIT_ST;
   }
 
-  if (button_blue.isPressed()) {
+  if (button_forwards.isPressed()) {
     comm_index         = nr_comm;
     on_execute_comm_st = 1; // executed at least once ...
     machine_state      = EXEC_ST;
@@ -188,6 +184,7 @@ void startExec(void)
 
 void exec(void)
 {
+  DEBUG_PRINTLN("exc exec fct");
   comm_index--;
 
   if (comm_index >= 0) { // avoid getting nonsense data
@@ -205,9 +202,9 @@ void exec(void)
   }
 
   if (comm_index < 0) {             // no more commands
-    button_blue.loop();
+    button_forwards.loop();
 
-    if (button_blue.isReleased()) { // wait till button releases state
+    if (button_forwards.isReleased()) { // wait till button releases state
       machine_state = START_EXEC_ST;
     }
   }
@@ -215,6 +212,7 @@ void exec(void)
 
 void stopAll(void)
 {
+  DEBUG_PRINTLN("exc stopAll fct");
   MotorControl.motorsStop();
 
   if (millis() >= time_now + STOP_DELAY) {
@@ -224,6 +222,7 @@ void stopAll(void)
 
 void turnRight(void)
 {
+  DEBUG_PRINTLN("exc turnRight fct");
   /*float distance = a / (360 * CURVE_CIRCUMFERENCE);
    * float nRevol = distance / WHEEL_CIRCUMFERENCE;
    * float encTarget = nRevol * ROTATION_TICKS;*/
@@ -258,6 +257,7 @@ void turnRight(void)
 
 void turnLeft(void)
 {
+  DEBUG_PRINTLN("exc turnLeft fct");
   /*float distance = a / (360 * CURVE_CIRCUMFERENCE);
    * float nRevol = distance / WHEEL_CIRCUMFERENCE;
    * float encTarget = nRevol * ROTATION_TICKS;*/
@@ -290,6 +290,7 @@ void turnLeft(void)
 
 void forward(void)
 {
+  DEBUG_PRINTLN("exc forward fct");
   if ((abs(encoder1_pos) < SETPOINT_RUN) &&
       (abs(encoder2_pos) < SETPOINT_RUN)) {
     startTimer();
@@ -331,9 +332,9 @@ void forward(void)
 
 void fsm(void)
 {
-  button_yellow_left.loop(); // loop() for left yellow
-  y_count = button_yellow_left.getCount();
-
+  DEBUG_PRINTLN("exc fsm fct");
+  button_command.loop(); // loop() for left yellow
+  y_count = button_command.getCount();
   switch (machine_state) {
   case INIT_ST:
     init();
@@ -375,6 +376,7 @@ void fsm(void)
 
 void setup()
 {
+  DEBUG_PRINTLN("exc microcontroller setup fct");
   // Encoders Pins
   pinMode(ENC1_A, INPUT);
   pinMode(ENC1_B, INPUT);
@@ -382,12 +384,12 @@ void setup()
   pinMode(ENC2_B, INPUT);
 
   // set debounce time to 50 milliseconds
-  button_yellow_left.setDebounceTime(50);
-  button_yellow_left.setCountMode(COUNT_FALLING);
-  button_red.setDebounceTime(50);
-  button_blue.setDebounceTime(50);
-  button_green.setDebounceTime(50);
-  button_yellow_bottom.setDebounceTime(50);
+  button_command.setDebounceTime(50);
+  button_command.setCountMode(COUNT_FALLING);
+  button_left.setDebounceTime(50);
+  button_forwards.setDebounceTime(50);
+  button_right.setDebounceTime(50);
+  button_backwards.setDebounceTime(50);
 
   // Motor Pins
   MotorControl.attachMotors(25, 26, 32, 33); // ROBOT José trocar 25 por 27
@@ -402,11 +404,12 @@ void setup()
   pinMode(BLUE,  OUTPUT);
   #endif // ifdef NEOPIXEL
 
-  Serial.begin(115200);
+  Serial.begin(9600);
   machine_state = INIT_ST;
 }
 
 void loop()
 {
+  DEBUG_PRINTLN("exc microcontroller loop fct");
   fsm();
 }

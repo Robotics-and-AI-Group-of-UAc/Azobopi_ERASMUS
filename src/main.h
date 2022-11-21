@@ -2,7 +2,7 @@
 #define main_h
 #include <Arduino.h>
 #include "ezButton.h"
-#include "NeoPixel/Adafruit_NeoPixel.h"
+#include "Adafruit_NeoPixel.h"
 #include "ESP32MotorControl.h"
 #include "PID_simple.h"
 
@@ -21,18 +21,9 @@
 #define ENC2_A 36
 #define ENC2_B 39
 
-// Led NeoPixel - Comment first define if rgb led or three led version
-// #define NEOPIXEL 5
-#ifdef NEOPIXEL
-# include <NeoPixel/Adafruit_NeoPixel.h>
+// Led NeoPixel
+#define NEOPIXEL 23
 # define NUMPIXELS 1
-#else // ifdef NEOPIXEL
-
-// Led pins
-# define RED 5
-# define GREEN 23
-# define BLUE 22
-#endif // ifdef NEOPIXEL
 
 // Wheels
 #define WHEEL_DIAMETER 66 // wheel diameter in mm
@@ -75,11 +66,11 @@ int speedL = 40;
 int speedR = 40;
 
 // ezButton pins
-ezButton button_yellow_left(18);
-ezButton button_red(19);
-ezButton button_yellow_bottom(21);
-ezButton button_blue(17);
-ezButton button_green(16);
+ezButton button_command(4); 
+ezButton button_left(16);
+ezButton button_backwards(19);
+ezButton button_forwards(17);
+ezButton button_right(18);
 
 // commands
 int nr_comm;
