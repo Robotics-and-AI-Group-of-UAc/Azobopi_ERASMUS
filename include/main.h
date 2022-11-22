@@ -5,7 +5,7 @@
 //#define DEBUG_VAR
 #define DEBUG_ACT
 //#define DEBUG_FCT
-#define DEBUG_STATE
+//#define DEBUG_STATE
 
 #ifdef DEBUG_VAR
   #define DEBUG_PRINT_VAR(x) Serial.print(x)
@@ -92,5 +92,62 @@ int on_execute_comm_st; // state control variable
 int machine_state;
 int last_machine_state;
 int stop_next_state;
+
+// PID
+#include "PID_simple.h"
+// SetPoints for PID
+#define SETPOINT_RUN 3900
+#define SETPOINT_TURN 1540
+
+unsigned long time_now;
+
+double val_outputL;
+double val_outputR;
+double enc_readL;
+double enc_readR;
+double Setpoint;
+double kp = 0.0007, ki = 0.000008, kd = 8;
+int    kspeed = 2;
+volatile int counterPID;
+int freq = 50;
+
+// Encoders Interrupt function variables and table
+volatile double encoder1_pos;
+volatile double encoder2_pos;
+byte encoder1_state, encoder2_state;
+int  encoder_table[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0 };
+
+// Motors
+#include "ESP32MotorControl.h"
+// Initialize motors library
+ESP32MotorControl MotorControl = ESP32MotorControl();
+
+// initial motor speed
+int speedL = 40;
+int speedR = 40;
+
+// time motors are stopped
+#define STOP_DELAY 500
+
+// Wheels
+#define WHEEL_DIAMETER 66 // wheel diameter in mm
+#define WHEEL_CIRCUMFERENCE (3.14 * WHEEL_DIAMETER)
+#define WHEELS_DISTANCE 110
+#define CURVE_CIRCUMFERENCE (3.14 * WHEELS_DISTANCE)
+
+// Encoders pins
+#define ENC1_A 34
+#define ENC1_B 35
+#define ENC2_A 36
+#define ENC2_B 39
+
+// Timer & Mutex for encoders and PID counters
+hw_timer_t  *timer      = NULL;
+portMUX_TYPE timerMux   = portMUX_INITIALIZER_UNLOCKED;
+portMUX_TYPE counterMux = portMUX_INITIALIZER_UNLOCKED;
+
+// Initialize PID control for each motor
+PID pidleft(&Setpoint, &enc_readL, &val_outputL, kp, ki, kd);
+PID pidright(&Setpoint, &enc_readR, &val_outputR, kp, ki, kd);
 
 #endif // ifndef main_h

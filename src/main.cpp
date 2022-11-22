@@ -1,5 +1,55 @@
 #include "main.h"
 
+void Encoders_Interrupt(void)
+{
+  byte next_state, table_input;
+
+  // Encoder 1
+  next_state     = digitalRead(ENC1_A) << 1;
+  next_state    |= digitalRead(ENC1_B);
+  table_input    = (encoder1_state << 2) | next_state;
+  encoder1_pos  -= encoder_table[table_input];
+  encoder1_state = next_state;
+
+  // Encoder 2
+  next_state     = digitalRead(ENC2_A) << 1;
+  next_state    |= digitalRead(ENC2_B);
+  table_input    = (encoder2_state << 2) | next_state;
+  encoder2_pos  += encoder_table[table_input];
+  encoder2_state = next_state;
+
+  counterPID += 1;
+}
+
+void IRAM_ATTR onTimer()
+{
+  portENTER_CRITICAL_ISR(&timerMux);
+  Encoders_Interrupt();
+  portEXIT_CRITICAL_ISR(&timerMux);
+}
+
+void startTimer()
+{
+  if (timer == NULL) {
+    timer = timerBegin(2, 4000, true);
+    timerAttachInterrupt(timer, &onTimer, true);
+  }
+  timerAlarmWrite(timer, 1, true);
+  timerAlarmEnable(timer);
+}
+
+void stopTimer()
+{
+  if (timer != NULL) {
+    timerAlarmDisable(timer);
+    timerDetachInterrupt(timer);
+    timerEnd(timer);
+    timer        = NULL;
+    encoder1_pos = 0;
+    encoder2_pos = 0;
+  }
+}
+
 void setLed(int r, int g, int b)
 {
   DEBUG_PRINTLN_FCT("exc setLED fct");
@@ -145,32 +195,137 @@ void turnRight(void)
 {
   DEBUG_PRINTLN_FCT("exc turnRight fct");
   DEBUG_PRINTLN_ACT("turn right");
-  machine_state = EXEC_ST;
-  delay(1000);
+  if ((abs(encoder1_pos) < SETPOINT_TURN) &&
+      (abs(encoder2_pos < SETPOINT_TURN)))
+  {
+    startTimer();
+
+    int vel = kspeed * (speedL + val_outputL);
+    int ver = kspeed * (speedR + val_outputR);
+    MotorControl.motorForward(0, vel);
+    MotorControl.motorReverse(1, ver);
+
+    if (counterPID > 50) {
+      portENTER_CRITICAL_ISR(&counterMux);
+      counterPID = 0;
+      portEXIT_CRITICAL_ISR(&counterMux);
+      enc_readL = encoder1_pos;
+      enc_readR = encoder2_pos;
+      pidleft.Compute();
+      pidright.Compute();
+    }
+  } else {
+    stopTimer();
+    time_now = millis();
+
+    stop_next_state = EXEC_ST;
+    machine_state   = STOP_ST;
+  }
 }
 
 void turnLeft(void)
 {
   DEBUG_PRINTLN_FCT("exc turnLeft fct");
   DEBUG_PRINTLN_ACT("turn left");
-  machine_state = EXEC_ST;
-  delay(1000);
+  if ((abs(encoder1_pos) < SETPOINT_TURN) &&
+      (abs(encoder2_pos < SETPOINT_TURN)))
+  {
+    startTimer();
+    int vel = kspeed * (speedL + val_outputL);
+    int ver = kspeed * (speedR + val_outputR);
+    MotorControl.motorReverse(0, vel);
+    MotorControl.motorForward(1, ver);
+
+    if (counterPID > 50) {
+      portENTER_CRITICAL_ISR(&counterMux);
+      counterPID = 0;
+      portEXIT_CRITICAL_ISR(&counterMux);
+      enc_readL = encoder1_pos;
+      enc_readR = encoder2_pos;
+      pidleft.Compute();
+      pidright.Compute();
+    }
+  } else {
+    stopTimer();
+    time_now = millis();
+
+    stop_next_state = EXEC_ST;
+    machine_state   = STOP_ST;
+  }
 }
 
 void forward(void)
 {
   DEBUG_PRINTLN_FCT("exc forward fct");
   DEBUG_PRINTLN_ACT("drive forward");
-  machine_state = EXEC_ST;
-  delay(1000);
+  if ((abs(encoder1_pos) < SETPOINT_RUN) &&
+      (abs(encoder2_pos) < SETPOINT_RUN)) {
+    startTimer();
+
+    int vel = kspeed * (speedL + val_outputL);
+    int ver = kspeed * (speedR + val_outputR);
+    MotorControl.motorForward(0, vel);
+    MotorControl.motorForward(1, ver);
+
+    if (counterPID > freq) {
+      portENTER_CRITICAL_ISR(&counterMux);
+      counterPID = 0;
+      portEXIT_CRITICAL_ISR(&counterMux);
+      enc_readL = encoder1_pos;
+      enc_readR = encoder2_pos;
+      pidleft.Compute();
+      pidright.Compute();
+    }
+  } else {
+    stopTimer();
+    time_now = millis();
+
+    stop_next_state = EXEC_ST;
+    machine_state   = STOP_ST;
+  }
 }
 
 void back(void)
 {
   DEBUG_PRINTLN_FCT("exc back fct");
   DEBUG_PRINTLN_ACT("drive back");
-  machine_state = EXEC_ST;
-  delay(1000);
+  if ((abs(encoder1_pos) < SETPOINT_RUN) &&
+      (abs(encoder2_pos) < SETPOINT_RUN)) {
+    startTimer();
+
+    int vel = kspeed * (speedL + val_outputL);
+    int ver = kspeed * (speedR + val_outputR);
+    MotorControl.motorReverse(0, vel);
+    MotorControl.motorReverse(1, ver);
+
+    if (counterPID > freq) {
+      portENTER_CRITICAL_ISR(&counterMux);
+      counterPID = 0;
+      portEXIT_CRITICAL_ISR(&counterMux);
+      enc_readL = encoder1_pos;
+      enc_readR = encoder2_pos;
+      pidleft.Compute();
+      pidright.Compute();
+
+      /*DEBUG_PRINT(enc_readL);
+       * DEBUG_PRINT(",");
+       * DEBUG_PRINT(val_outputL);
+       * DEBUG_PRINT(",");
+       * DEBUG_PRINT(vel);
+       * DEBUG_PRINT(",");
+       * DEBUG_PRINT(enc_readR);
+       * DEBUG_PRINT(",");
+       * DEBUG_PRINT(val_outputR);
+       * DEBUG_PRINT(",");
+       * DEBUG_PRINTLN(ver);*/
+    }
+  } else {
+    stopTimer();
+    time_now = millis();
+
+    stop_next_state = EXEC_ST;
+    machine_state   = STOP_ST;
+  }
 }
 
 void stop(void)
@@ -179,10 +334,11 @@ void stop(void)
   DEBUG_PRINTLN_ACT("stop exec");
   setLed(255, 0, 0);               // red
   //put code to stop the motors here
-  button_command.resetCount(); // reset command button counter
-  button_command_count = 0;
-  machine_state = INIT_ST;
-  delay(2000);
+  MotorControl.motorsStop();
+
+  if (millis() >= time_now + STOP_DELAY) {
+    machine_state = stop_next_state;
+  }
 }
 
 void fsm(void)
@@ -270,8 +426,8 @@ void setup()
   DEBUG_PRINTLN_FCT("exc microcontroller setup fct");
   
   //setup interrupts // very unstable button input with the interrupts
-  attachInterrupt(digitalPinToInterrupt(button_stop), set_stop_state_interrupt, RISING); //attach interrupt
-  sei();                                                               //activate global interrupts
+ // attachInterrupt(digitalPinToInterrupt(button_stop), set_stop_state_interrupt, RISING); //attach interrupt
+  //sei();                                                               //activate global interrupts
 
   // setup ez buttons debounce time to 50 milliseconds
   button_command.setDebounceTime(button_debounce_time);
@@ -285,6 +441,16 @@ void setup()
   pixels.begin(); // INITIALIZE NeoPixel strip object
   pixels.clear(); // Set all pixel colors to 'off'
   
+  // Motor setup
+  // Encoders Pins
+  pinMode(ENC1_A, INPUT);
+  pinMode(ENC1_B, INPUT);
+  pinMode(ENC2_A, INPUT);
+  pinMode(ENC2_B, INPUT);
+
+  // Motor Pins
+  MotorControl.attachMotors(25, 26, 32, 33); //ROBOT José trocar 25 por 27
+
   machine_state = INIT_ST; // set machine to init state
 }
 
