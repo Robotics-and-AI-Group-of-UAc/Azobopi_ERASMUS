@@ -50,60 +50,60 @@ void stopTimer()
   }
 }
 
-void setLed(int r, int g, int b)
+void setLed(int r, int g, int b) // function to set NEO Pixel LED
 {
-  DEBUG_PRINTLN_FCT("exc setLED fct");
+  DEBUG_PRINTLN_FCT("exc setLED fct"); // debug print
   pixels.clear(); // Set all pixel colors to 'off'
-  pixels.setPixelColor(0, pixels.Color(r, g, b));
-  pixels.show();
+  pixels.setPixelColor(0, pixels.Color(r, g, b)); // set pixel color
+  pixels.show(); // show pixel color
 }
 
-void read_direction_buttons()
+void read_direction_buttons() // function to read direction buttons
 {
-  DEBUG_PRINTLN_FCT("exc read_direction_buttons fct");
-  button_left.loop();
+  DEBUG_PRINTLN_FCT("exc read_direction_buttons fct"); //debug print
+  button_left.loop(); //read left button
 
-  if (button_left.isPressed()) {  
-    mov = TURN_LEFT;
-    DEBUG_PRINTLN_ACT("button left is pressed");
-    if (mov != 0) {
-      recorded_button[nr_comm] = mov;
-      nr_comm++;
+  if (button_left.isPressed()) {   //check if left button is pressed
+    mov = TURN_LEFT; //set mov to turn left
+    DEBUG_PRINTLN_ACT("button left is pressed"); // debug print
+    if (mov != 0) { // check if mov is not 0
+      recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
+      nr_comm++; //add 1 to the total number of movements
     }
-    mov = 0;
+    mov = 0; //reset mov to 0 
   }
-  button_forwards.loop();
+  button_forwards.loop(); //read forwards button
 
-  if (button_forwards.isPressed()) {
-    mov = FORWARD;
-    DEBUG_PRINTLN_ACT("button forward is pressed");
-    if (mov != 0) {
-      recorded_button[nr_comm] = mov;
-      nr_comm++;
+  if (button_forwards.isPressed()) { //check if forwards button is pressed
+    mov = FORWARD; //set mov to forward
+    DEBUG_PRINTLN_ACT("button forward is pressed"); //debug print
+    if (mov != 0) { // check if mov is not 0
+      recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
+      nr_comm++; //add 1 to the total number of movements
     }
-    mov = 0;
+    mov = 0; //reset mov to 0 
   }
-  button_right.loop();
+  button_right.loop(); //read right button
 
-  if (button_right.isPressed()) {
-    mov = TURN_RIGHT;
-    DEBUG_PRINTLN_ACT("button right is pressed");
-    if (mov != 0) {
-      recorded_button[nr_comm] = mov;
-      nr_comm++;
+  if (button_right.isPressed()) { //check if right button is pressed
+    mov = TURN_RIGHT; //set mov to turn right
+    DEBUG_PRINTLN_ACT("button right is pressed"); //debug print
+    if (mov != 0) { // check if mov is not 0
+      recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
+      nr_comm++; //add 1 to the total number of movements
     }
-    mov = 0;
+    mov = 0; //reset mov to 0 
   }
-  button_backwards.loop();
+  button_backwards.loop(); //read backwards button
 
-  if (button_backwards.isPressed()) {
-    mov = BACKWARD;
-    DEBUG_PRINTLN_ACT("button backwards is pressed");
-    if (mov != 0) {
-      recorded_button[nr_comm] = mov;
-      nr_comm++;
+  if (button_backwards.isPressed()) { //check if backwards button is pressed
+    mov = BACKWARD; //set mov to backward
+    DEBUG_PRINTLN_ACT("button backwards is pressed"); //debug print
+    if (mov != 0) { // check if mov is not 0
+      recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
+      nr_comm++; //add 1 to the total number of movements
     }
-    mov = 0;
+    mov = 0; //reset mov to 0 
   }
 } // read_cmd_buttons
 
@@ -202,8 +202,8 @@ void turnRight(void)
 
     int vel = kspeed * (speedL + val_outputL);
     int ver = kspeed * (speedR + val_outputR);
-    MotorControl.motorForward(0, vel);
-    MotorControl.motorReverse(1, ver);
+    MotorControl.motorReverse(0, vel);
+    MotorControl.motorForward(1, ver);
 
     if (counterPID > 50) {
       portENTER_CRITICAL_ISR(&counterMux);
@@ -233,8 +233,8 @@ void turnLeft(void)
     startTimer();
     int vel = kspeed * (speedL + val_outputL);
     int ver = kspeed * (speedR + val_outputR);
-    MotorControl.motorReverse(0, vel);
-    MotorControl.motorForward(1, ver);
+    MotorControl.motorForward(0, vel);
+    MotorControl.motorReverse(1, ver);
 
     if (counterPID > 50) {
       portENTER_CRITICAL_ISR(&counterMux);
@@ -264,8 +264,8 @@ void forward(void)
 
     int vel = kspeed * (speedL + val_outputL);
     int ver = kspeed * (speedR + val_outputR);
-    MotorControl.motorForward(0, vel);
-    MotorControl.motorForward(1, ver);
+    MotorControl.motorReverse(0, vel);
+    MotorControl.motorReverse(1, ver);
 
     if (counterPID > freq) {
       portENTER_CRITICAL_ISR(&counterMux);
@@ -295,8 +295,8 @@ void back(void)
 
     int vel = kspeed * (speedL + val_outputL);
     int ver = kspeed * (speedR + val_outputR);
-    MotorControl.motorReverse(0, vel);
-    MotorControl.motorReverse(1, ver);
+    MotorControl.motorForward(0, vel);
+    MotorControl.motorForward(1, ver);
 
     if (counterPID > freq) {
       portENTER_CRITICAL_ISR(&counterMux);
@@ -331,9 +331,7 @@ void back(void)
 void stop(void)
 {
   DEBUG_PRINTLN_FCT("exc stop fct");
-  DEBUG_PRINTLN_ACT("stop exec");
-  setLed(255, 0, 0);               // red
-  //put code to stop the motors here
+  DEBUG_PRINTLN_ACT("stop");
   MotorControl.motorsStop();
 
   if (millis() >= time_now + STOP_DELAY) {
@@ -341,101 +339,138 @@ void stop(void)
   }
 }
 
-void fsm(void)
+void stop_exec(void)
+{
+  DEBUG_PRINTLN_FCT("exc stop_exec fct"); // debug print
+  DEBUG_PRINTLN_ACT("stop exec"); // debug print
+  setLed(255, 0, 0); // set led to red
+  MotorControl.motorsStop(); // stop motors
+  machine_state = INIT_ST; // set machine state to init
+  
+  delay(STOP_EXEC_DELAY); // delay by STOP_EXEC_DELAY
+}
+
+void set_stop_state(void){ // function that is called when stop button is pressed to change machine state
+  DEBUG_PRINTLN_FCT("exc set_stop_state fct"); // debug print
+  button_stop.loop(); // loop() for button_stop
+  button_stop_count = button_stop.getCount(); // get count of how often command button was pressed
+  
+  if (button_stop_count >= 1) // check if stop button is pressed more then 0 times
+  {
+    machine_state = STOP_EXEC_ST; // set machine state
+    button_stop_count = 0; // reset button stop counter
+    button_stop.resetCount(); // reset button stop 
+  }
+  
+} // set_stop_state
+
+void fsm(void) // finite state machine
 {
   DEBUG_PRINTLN_FCT("exc fsm fct");
+  
+  set_stop_state(); // call fct to check if stop button was pressed
 
   button_command.loop(); // loop() for button_command
   button_command_count = button_command.getCount(); // get count of how often command button was pressed
   
-  DEBUG_PRINT_VAR("button_command_count: ");
-  DEBUG_PRINTLN_VAR(button_command_count);
+  DEBUG_PRINT_VAR("button_command_count: "); // debug print
+  DEBUG_PRINTLN_VAR(button_command_count); // debug print
   
-  DEBUG_PRINT_VAR("nr_comm: ");
-  DEBUG_PRINTLN_VAR(nr_comm);
+  DEBUG_PRINT_VAR("nr_comm: "); // debug print
+  DEBUG_PRINTLN_VAR(nr_comm); // debug print
   
-  switch (machine_state) {
+  switch (machine_state) { // switch to current machine state
   case INIT_ST: // execute init state
-    last_machine_state = machine_state;
-    init(); 
+    last_machine_state = machine_state; // set last machine state
+    init();  //execute func
     break;
 
   case READ_COMM_ST: // execute read comment state
-    last_machine_state = machine_state;
-    readComm();
+    last_machine_state = machine_state; // set last machine state
+    readComm(); //execute func
     break;
 
   case START_EXEC_ST: // execute start execution state
-    last_machine_state = machine_state;
-    startExec();
+    last_machine_state = machine_state; // set last machine state
+    startExec(); //execute func
     break;
 
   case EXEC_ST: // execute execute state
-    last_machine_state = machine_state;
-    exec();
+    last_machine_state = machine_state; // set last machine state
+    exec(); //execute func
     break;
 
   case FORWARD_ST: // execute forward state
-    last_machine_state = machine_state;
-    forward();
+    last_machine_state = machine_state; // set last machine state
+    forward(); //execute func
     break;
 
   case BACK_ST: // execute forward state
-    last_machine_state = machine_state;
-    back();
+    last_machine_state = machine_state; // set last machine state
+    back(); //execute func
     break;
 
   case TURN_RIGHT_ST: // execute turn right state
-    last_machine_state = machine_state;
-    turnRight();
+    last_machine_state = machine_state; // set last machine state
+    turnRight(); //execute func
     break;
 
   case TURN_LEFT_ST: // execute turn left state
-    last_machine_state = machine_state;
-    turnLeft();
+    last_machine_state = machine_state; // set last machine state
+    turnLeft(); //execute func
     break;
 
   case STOP_ST:  //execute stop state
-    //last_machine_state = machine_state;
-    stop();
+    last_machine_state = machine_state; // set last machine state
+    stop(); //execute func
     break;
   
-  
-  /* // ?????is this code really needed, what is the purpose of the void state?????
+  case STOP_EXEC_ST: // execute STOP_EXEC state 
+    last_machine_state = machine_state; // set last machine state
+    stop_exec(); //execute func
+    break;
+
   case VOID_ST: // execute void state 
-    last_machine_state = machine_state;
     // put code here
     break;
-  */
   }
 } // fsm
 
-void show_state(void){ // show state
-  if (machine_state != last_machine_state){
-    DEBUG_PRINTLN_STATE(machine_state);
+void show_state(void){ // show state function is used for debuging
+  if (machine_state != last_machine_state){ // show new state if the state has changed
+    DEBUG_PRINTLN_STATE(machine_state); // print current state
   }
 } // show state
 
-void set_stop_state_interrupt(void){ // function that is called when stop button is pressed to change machine state
-  machine_state = STOP_ST;
-} // set_stop_state_interrupt
+void showBitmap(void) {
+  display.clearDisplay();
+ 
+  display.drawBitmap(0, 0, bitmap_uac_logo, bitmap_height, bitmap_width, WHITE);
+  display.display();
+}
 
-void setup()
+void setup() // microcontroller setup runs once
 {
   Serial.begin(9600); // setup serial monitor
-  DEBUG_PRINTLN_FCT("exc microcontroller setup fct");
+  DEBUG_PRINTLN_FCT("exc microcontroller setup fct"); // debug print
   
-  //setup interrupts // very unstable button input with the interrupts
- // attachInterrupt(digitalPinToInterrupt(button_stop), set_stop_state_interrupt, RISING); //attach interrupt
-  //sei();                                                               //activate global interrupts
-
+  //display setup 
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;); // Don't proceed, loop forever
+  }
+  display.clearDisplay(); // Clear the buffer
+  showBitmap(); // show uac logo
+  
   // setup ez buttons debounce time to 50 milliseconds
-  button_command.setDebounceTime(button_debounce_time);
+  button_command.setDebounceTime(button_debounce_time); 
   button_command.setCountMode(COUNT_FALLING);
   button_left.setDebounceTime(button_debounce_time);
   button_forwards.setDebounceTime(button_debounce_time);
   button_right.setDebounceTime(button_debounce_time);
   button_backwards.setDebounceTime(button_debounce_time);
+  button_stop.setDebounceTime(button_debounce_time);
 
   // Neopixel setup
   pixels.begin(); // INITIALIZE NeoPixel strip object
@@ -454,9 +489,9 @@ void setup()
   machine_state = INIT_ST; // set machine to init state
 }
 
-void loop()
+void loop() // microcontroller loop function 
 {
-  DEBUG_PRINTLN_FCT("exc microcontoller loop fct");
+  DEBUG_PRINTLN_FCT("exc microcontoller loop fct"); // debug print
   fsm(); // execute finite state machine
-  show_state();
+  show_state(); // execute show state fct for debugging
 }

@@ -5,7 +5,7 @@
 //#define DEBUG_VAR
 #define DEBUG_ACT
 //#define DEBUG_FCT
-//#define DEBUG_STATE
+#define DEBUG_STATE
 
 #ifdef DEBUG_VAR
   #define DEBUG_PRINT_VAR(x) Serial.print(x)
@@ -54,7 +54,7 @@ ezButton button_left(16);
 ezButton button_backwards(19);
 ezButton button_forwards(17);
 ezButton button_right(18);
-#define button_stop 5
+ezButton button_stop (5);
 
 // States
 #define VOID_ST 0
@@ -67,6 +67,7 @@ ezButton button_right(18);
 #define TURN_RIGHT_ST 7
 #define TURN_LEFT_ST 8
 #define BACK_ST 9
+#define STOP_EXEC_ST 10
 
 // Movement Commands
 #define MAX_NR_COMMANDS 20
@@ -84,6 +85,7 @@ int recorded_button[MAX_NR_COMMANDS];
 int button_index = 0;
 int mov;                // Programed data from buttons
 unsigned long button_command_count;  // Nr. of times command button is pressed
+unsigned long button_stop_count = 0; // Nr. of times stop button is pressed
 
 int on_execute_test_st; // state control variable
 int on_execute_comm_st; // state control variable
@@ -128,6 +130,7 @@ int speedR = 40;
 
 // time motors are stopped
 #define STOP_DELAY 500
+#define STOP_EXEC_DELAY 2000// delay after stop button is pressed
 
 // Wheels
 #define WHEEL_DIAMETER 66 // wheel diameter in mm
@@ -150,4 +153,20 @@ portMUX_TYPE counterMux = portMUX_INITIALIZER_UNLOCKED;
 PID pidleft(&Setpoint, &enc_readL, &val_outputL, kp, ki, kd);
 PID pidright(&Setpoint, &enc_readR, &val_outputR, kp, ki, kd);
 
+// OLED DISPLAY SSD1306
+
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+ 
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// Display bitmaps
+#include "displayuaclogo.h"
 #endif // ifndef main_h
