@@ -50,6 +50,13 @@ void stopTimer()
   }
 }
 
+void showBitmap(unsigned char bitmap_oled[]) {
+  display.clearDisplay();
+ 
+  display.drawBitmap(0, 0, bitmap_oled, bitmap_height, bitmap_width, WHITE);
+  display.display();
+}
+
 void setLed(int r, int g, int b) // function to set NEO Pixel LED
 {
   DEBUG_PRINTLN_FCT("exc setLED fct"); // debug print
@@ -66,6 +73,7 @@ void read_direction_buttons() // function to read direction buttons
   if (button_left.isPressed()) {   //check if left button is pressed
     mov = TURN_LEFT; //set mov to turn left
     DEBUG_PRINTLN_ACT("button left is pressed"); // debug print
+    tone(PIN_SPEAKER,single_note_c6,100); // play single note for user feedback
     if (mov != 0) { // check if mov is not 0
       recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
       nr_comm++; //add 1 to the total number of movements
@@ -77,6 +85,7 @@ void read_direction_buttons() // function to read direction buttons
   if (button_forwards.isPressed()) { //check if forwards button is pressed
     mov = FORWARD; //set mov to forward
     DEBUG_PRINTLN_ACT("button forward is pressed"); //debug print
+    tone(PIN_SPEAKER,single_note_c6,100); // play single note for user feedback
     if (mov != 0) { // check if mov is not 0
       recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
       nr_comm++; //add 1 to the total number of movements
@@ -88,6 +97,7 @@ void read_direction_buttons() // function to read direction buttons
   if (button_right.isPressed()) { //check if right button is pressed
     mov = TURN_RIGHT; //set mov to turn right
     DEBUG_PRINTLN_ACT("button right is pressed"); //debug print
+    tone(PIN_SPEAKER,single_note_c6,100); // play single note for user feedback
     if (mov != 0) { // check if mov is not 0
       recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
       nr_comm++; //add 1 to the total number of movements
@@ -99,6 +109,7 @@ void read_direction_buttons() // function to read direction buttons
   if (button_backwards.isPressed()) { //check if backwards button is pressed
     mov = BACKWARD; //set mov to backward
     DEBUG_PRINTLN_ACT("button backwards is pressed"); //debug print
+    tone(PIN_SPEAKER,single_note_c6,100); // play single note for user feedback
     if (mov != 0) { // check if mov is not 0
       recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
       nr_comm++; //add 1 to the total number of movements
@@ -166,7 +177,6 @@ void startExec(void) // function to start execution of commands
 void exec(void) // function to execut the movement commands
 {
   DEBUG_PRINTLN_FCT("exc exec fct"); // debug print
-  
   comm_index--; // comm index -1
 
   if (comm_index >= 0) { // avoid getting nonsense data
@@ -346,12 +356,15 @@ void stop_exec(void) // function to stop execution of current run
   DEBUG_PRINTLN_ACT("stop exec"); // debug print
   
   setLed(255, 0, 0); // set led to red
-  
+
   MotorControl.motorsStop(); // stop motors
   machine_state = EXEC_ST; // set machine state to init
   comm_index = 0; // set comm index to 0 to restart at command 0 on the next run
   
+  showBitmap(image_data_DISTRESSED_EYESarray);
+  tone(PIN_SPEAKER,single_note_c3,500); // play single note for user feedback
   delay(STOP_EXEC_DELAY); // delay by STOP_EXEC_DELAY
+  showBitmap(image_data_EYES_FRONTarray);
 }
 
 void set_stop_state(void){ // function that is called when stop button is pressed to change machine state
@@ -361,6 +374,7 @@ void set_stop_state(void){ // function that is called when stop button is presse
   
   if (button_stop_count >= 1) // check if stop button is pressed more then 0 times
   {
+    
     machine_state = STOP_EXEC_ST; // set machine state
     button_stop_count = 0; // reset button stop counter
     button_stop.resetCount(); // reset button stop 
@@ -446,13 +460,6 @@ void show_state(void){ // show state function is used for debuging
   }
 } // show state
 
-void showBitmap(void) {
-  display.clearDisplay();
- 
-  display.drawBitmap(0, 0, bitmap_uac_logo, bitmap_height, bitmap_width, WHITE);
-  display.display();
-}
-
 void setup() // microcontroller setup runs once
 {
   Serial.begin(9600); // setup serial monitor
@@ -464,7 +471,9 @@ void setup() // microcontroller setup runs once
     for (;;); // Don't proceed, loop forever
   }
   display.clearDisplay(); // Clear the buffer
-  showBitmap(); // show uac logo
+  showBitmap(bitmap_uac_logo); // show uac logo
+  delay(1000); // show UAC logo for 1 sec
+  showBitmap(image_data_EYES_FRONTarray);
   
   // setup ez buttons debounce time to 50 milliseconds
   button_command.setDebounceTime(button_debounce_time); 

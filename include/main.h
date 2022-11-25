@@ -173,4 +173,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define bitmap_width    64  // define bitmap size
 
 #include "displayuaclogo.h"
+#include "smileys.h"
 #endif // ifndef main_h
+
+// Speaker setup
+
+#define PIN_SPEAKER 12
+#include "sounds.h"
