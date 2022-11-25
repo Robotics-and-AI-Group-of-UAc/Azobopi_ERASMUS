@@ -33,7 +33,7 @@
   #define DEBUG_PRINTLN_STATE(x) Serial.print("Machine State: "); Serial.println(x)
 #else
   #define DEBUG_PRINTLN_STATE(x)
-#endif
+#endif // debug setup
 
 // include software header files
 #include <Arduino.h>
@@ -125,12 +125,12 @@ int  encoder_table[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0 };
 ESP32MotorControl MotorControl = ESP32MotorControl();
 
 // initial motor speed
-int speedL = 40;
-int speedR = 40;
+int speedL = 20;
+int speedR = 20;
 
 // time motors are stopped
 #define STOP_DELAY 500
-#define STOP_EXEC_DELAY 2000// delay after stop button is pressed
+#define STOP_EXEC_DELAY 1000// delay after stop button is pressed
 
 // Wheels
 #define WHEEL_DIAMETER 66 // wheel diameter in mm
@@ -155,18 +155,22 @@ PID pidright(&Setpoint, &enc_readR, &val_outputR, kp, ki, kd);
 
 // OLED DISPLAY SSD1306
 
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <SPI.h> // inlucde libraries for use of OLED
+#include <Wire.h> // inlucde libraries for use of OLED
+#include <Adafruit_GFX.h> // inlucde libraries for use of OLED
+#include <Adafruit_SSD1306.h> // inlucde libraries for use of OLED
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
- 
+
 // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
 #define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Display bitmaps
+
+#define bitmap_height   128 // define bitmap size
+#define bitmap_width    64  // define bitmap size
+
 #include "displayuaclogo.h"
 #endif // ifndef main_h

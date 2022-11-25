@@ -107,10 +107,10 @@ void read_direction_buttons() // function to read direction buttons
   }
 } // read_cmd_buttons
 
-void init(void)
+void init(void) // function to init the the robo
 {
   DEBUG_PRINTLN_FCT("exc init fct");
-  setLed(0, 0, 255); // set blue
+  setLed(0, 0, 255); // set LED to blue
 
   if (button_command_count > 3) { // reset command button counter if command button is pressed more then one time
     button_command.resetCount();
@@ -120,7 +120,7 @@ void init(void)
     // Initialize state
     nr_comm = 0;                                         // start the command reading
     memset(recorded_button, 0, sizeof(recorded_button)); // initialize to zero the commands vector
-    machine_state = READ_COMM_ST;
+    machine_state = READ_COMM_ST; // set machine state to read comm
   }
 
   if (button_command_count == 0) {
@@ -128,13 +128,13 @@ void init(void)
   }
 }
 
-void readComm(void)
+void readComm(void) // funciton to read movement commands
 {
-  DEBUG_PRINTLN_FCT("exc readComm fct");
-  setLed(255, 255, 0);               // yellow
+  DEBUG_PRINTLN_FCT("exc readComm fct"); // debug print
+  setLed(255, 255, 0);               // set LED to yellow
 
   if (nr_comm < MAX_NR_COMMANDS) { // it only keeps the first max_nr_commands...
-    read_direction_buttons();
+    read_direction_buttons(); // call read dir func
   }
 
   // -- wait for the button_command_count = 2 and nr_commands != 0
@@ -143,36 +143,37 @@ void readComm(void)
   }
 }
 
-void startExec(void)
+void startExec(void) // function to start execution of commands
 {
-  DEBUG_PRINTLN_FCT("exc startExec fct");
-  setLed(0, 255, 0); // green
-  button_forwards.loop();
+  DEBUG_PRINTLN_FCT("exc startExec fct"); // debug print
+  setLed(0, 255, 0); // set LED to green
+  button_forwards.loop(); 
 
   if (button_command_count > 2) {
     if (on_execute_comm_st == 1) {
       button_command.resetCount();
     }
-    machine_state = INIT_ST;
+    machine_state = INIT_ST; // set machine state
   }
 
-  if (button_forwards.isPressed()) {
-    comm_index         = nr_comm;
+  if (button_forwards.isPressed()) { // check if button forward is pressed
+    comm_index         = nr_comm; // set comm_index to number of commands
     on_execute_comm_st = 1; // executed at least once ... needed???
-    machine_state      = EXEC_ST;
+    machine_state      = EXEC_ST; // set machine state to exectute_state
   }
 }
 
-void exec(void)
+void exec(void) // function to execut the movement commands
 {
-  DEBUG_PRINTLN_FCT("exc exec fct");
-  setLed(255, 51, 255);               // pink
-  comm_index--;
+  DEBUG_PRINTLN_FCT("exc exec fct"); // debug print
+  
+  comm_index--; // comm index -1
 
   if (comm_index >= 0) { // avoid getting nonsense data
-    int action = recorded_button[(nr_comm - 1) - comm_index];
-    if (action == FORWARD) {
-      machine_state = FORWARD_ST;
+    setLed(255, 51, 255);               // set led to pink
+    int action = recorded_button[(nr_comm - 1) - comm_index];  // get current action
+    if (action == FORWARD) {  //set state to execute movement action
+      machine_state = FORWARD_ST; 
     } else if (action == BACKWARD) {
       machine_state = BACK_ST;
     } else if (action == TURN_LEFT) {
@@ -183,7 +184,7 @@ void exec(void)
   }
 
   if (comm_index < 0) {             // no more commands
-    button_forwards.loop();
+    button_forwards.loop();         
 
     if (button_forwards.isReleased()) { // wait till button releases state
       machine_state = START_EXEC_ST;
@@ -191,7 +192,7 @@ void exec(void)
   }
 }
 
-void turnRight(void)
+void turnRight(void) // function to turn right
 {
   DEBUG_PRINTLN_FCT("exc turnRight fct");
   DEBUG_PRINTLN_ACT("turn right");
@@ -223,7 +224,7 @@ void turnRight(void)
   }
 }
 
-void turnLeft(void)
+void turnLeft(void) // function to turn left
 {
   DEBUG_PRINTLN_FCT("exc turnLeft fct");
   DEBUG_PRINTLN_ACT("turn left");
@@ -254,7 +255,7 @@ void turnLeft(void)
   }
 }
 
-void forward(void)
+void forward(void) // function to drive forwards
 {
   DEBUG_PRINTLN_FCT("exc forward fct");
   DEBUG_PRINTLN_ACT("drive forward");
@@ -285,7 +286,7 @@ void forward(void)
   }
 }
 
-void back(void)
+void back(void) // function to drive backwards
 {
   DEBUG_PRINTLN_FCT("exc back fct");
   DEBUG_PRINTLN_ACT("drive back");
@@ -328,24 +329,27 @@ void back(void)
   }
 }
 
-void stop(void)
+void stop(void) // function that is called between movemnts
 {
-  DEBUG_PRINTLN_FCT("exc stop fct");
-  DEBUG_PRINTLN_ACT("stop");
-  MotorControl.motorsStop();
+  DEBUG_PRINTLN_FCT("exc stop fct"); // debug print
+  DEBUG_PRINTLN_ACT("stop"); // debug print
+  MotorControl.motorsStop(); // stop motors
 
   if (millis() >= time_now + STOP_DELAY) {
-    machine_state = stop_next_state;
+    machine_state = stop_next_state; 
   }
 }
 
-void stop_exec(void)
+void stop_exec(void) // function to stop execution of current run
 {
   DEBUG_PRINTLN_FCT("exc stop_exec fct"); // debug print
   DEBUG_PRINTLN_ACT("stop exec"); // debug print
+  
   setLed(255, 0, 0); // set led to red
+  
   MotorControl.motorsStop(); // stop motors
-  machine_state = INIT_ST; // set machine state to init
+  machine_state = EXEC_ST; // set machine state to init
+  comm_index = 0; // set comm index to 0 to restart at command 0 on the next run
   
   delay(STOP_EXEC_DELAY); // delay by STOP_EXEC_DELAY
 }
@@ -455,7 +459,6 @@ void setup() // microcontroller setup runs once
   DEBUG_PRINTLN_FCT("exc microcontroller setup fct"); // debug print
   
   //display setup 
-  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
     Serial.println(F("SSD1306 allocation failed"));
     for (;;); // Don't proceed, loop forever
