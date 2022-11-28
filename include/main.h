@@ -99,7 +99,7 @@ int stop_next_state;
 #include "PID_simple.h"
 // SetPoints for PID
 #define SETPOINT_RUN 3900
-#define SETPOINT_TURN 1540
+#define SETPOINT_TURN 700
 
 unsigned long time_now;
 
@@ -108,7 +108,7 @@ double val_outputR;
 double enc_readL;
 double enc_readR;
 double Setpoint;
-double kp = 0.0007, ki = 0.000008, kd = 8;
+double kp = 0.0001, ki = 0, kd = 0;
 int    kspeed = 2;
 volatile int counterPID;
 int freq = 50;
@@ -125,8 +125,8 @@ int  encoder_table[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0 };
 ESP32MotorControl MotorControl = ESP32MotorControl();
 
 // initial motor speed
-int speedL = 20;
-int speedR = 20;
+int speedL = 24.98;
+int speedR = 25;
 
 // time motors are stopped
 #define STOP_DELAY 500
@@ -135,7 +135,7 @@ int speedR = 20;
 // Wheels
 #define WHEEL_DIAMETER 66 // wheel diameter in mm
 #define WHEEL_CIRCUMFERENCE (3.14 * WHEEL_DIAMETER)
-#define WHEELS_DISTANCE 110
+#define WHEELS_DISTANCE 120
 #define CURVE_CIRCUMFERENCE (3.14 * WHEELS_DISTANCE)
 
 // Encoders pins
