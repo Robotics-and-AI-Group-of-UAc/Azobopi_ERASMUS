@@ -73,7 +73,7 @@ void read_direction_buttons() // function to read direction buttons
   if (button_left.isPressed()) {   //check if left button is pressed
     mov = TURN_LEFT; //set mov to turn left
     DEBUG_PRINTLN_ACT("button left is pressed"); // debug print
-    tone(PIN_SPEAKER,single_note_c6,100); // play single note for user feedback
+    tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
     if (mov != 0) { // check if mov is not 0
       recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
       nr_comm++; //add 1 to the total number of movements
@@ -85,7 +85,7 @@ void read_direction_buttons() // function to read direction buttons
   if (button_forwards.isPressed()) { //check if forwards button is pressed
     mov = FORWARD; //set mov to forward
     DEBUG_PRINTLN_ACT("button forward is pressed"); //debug print
-    tone(PIN_SPEAKER,single_note_c6,100); // play single note for user feedback
+    tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
     if (mov != 0) { // check if mov is not 0
       recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
       nr_comm++; //add 1 to the total number of movements
@@ -97,7 +97,7 @@ void read_direction_buttons() // function to read direction buttons
   if (button_right.isPressed()) { //check if right button is pressed
     mov = TURN_RIGHT; //set mov to turn right
     DEBUG_PRINTLN_ACT("button right is pressed"); //debug print
-    tone(PIN_SPEAKER,single_note_c6,100); // play single note for user feedback
+    tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
     if (mov != 0) { // check if mov is not 0
       recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
       nr_comm++; //add 1 to the total number of movements
@@ -109,7 +109,7 @@ void read_direction_buttons() // function to read direction buttons
   if (button_backwards.isPressed()) { //check if backwards button is pressed
     mov = BACKWARD; //set mov to backward
     DEBUG_PRINTLN_ACT("button backwards is pressed"); //debug print
-    tone(PIN_SPEAKER,single_note_c6,100); // play single note for user feedback
+    tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
     if (mov != 0) { // check if mov is not 0
       recorded_button[nr_comm] = mov; //write mov to array of recorded buttons(movements)
       nr_comm++; //add 1 to the total number of movements
@@ -158,6 +158,7 @@ void startExec(void) // function to start execution of commands
 {
   DEBUG_PRINTLN_FCT("exc startExec fct"); // debug print
   setLed(0, 255, 0); // set LED to green
+  showBitmap(image_data_EYES_MIDDLE);
   button_forwards.loop(); 
 
   if (button_command_count > 2) {
@@ -194,6 +195,7 @@ void exec(void) // function to execut the movement commands
   }
 
   if (comm_index < 0) {             // no more commands
+    finish_melody();
     button_forwards.loop();         
 
     if (button_forwards.isReleased()) { // wait till button releases state
@@ -206,6 +208,7 @@ void turnRight(void) // function to turn right
 {
   DEBUG_PRINTLN_FCT("exc turnRight fct");
   DEBUG_PRINTLN_ACT("turn right");
+  showBitmap(image_data_EYES_RIGHT);
   if ((abs(encoder1_pos) < SETPOINT_TURN) &&
       (abs(encoder2_pos < SETPOINT_TURN)))
   {
@@ -238,6 +241,7 @@ void turnLeft(void) // function to turn left
 {
   DEBUG_PRINTLN_FCT("exc turnLeft fct");
   DEBUG_PRINTLN_ACT("turn left");
+  showBitmap(image_data_EYES_LEFT);
   if ((abs(encoder1_pos) < SETPOINT_TURN) &&
       (abs(encoder2_pos < SETPOINT_TURN)))
   {
@@ -269,6 +273,7 @@ void forward(void) // function to drive forwards
 {
   DEBUG_PRINTLN_FCT("exc forward fct");
   DEBUG_PRINTLN_ACT("drive forward");
+  showBitmap(image_data_EYES_DOWN);
   if ((abs(encoder1_pos) < SETPOINT_RUN) &&
       (abs(encoder2_pos) < SETPOINT_RUN)) {
     startTimer();
@@ -300,6 +305,7 @@ void back(void) // function to drive backwards
 {
   DEBUG_PRINTLN_FCT("exc back fct");
   DEBUG_PRINTLN_ACT("drive back");
+  showBitmap(image_data_EYES_UP);
   if ((abs(encoder1_pos) < SETPOINT_RUN) &&
       (abs(encoder2_pos) < SETPOINT_RUN)) {
     startTimer();
@@ -354,32 +360,33 @@ void stop_exec(void) // function to stop execution of current run
 {
   DEBUG_PRINTLN_FCT("exc stop_exec fct"); // debug print
   DEBUG_PRINTLN_ACT("stop exec"); // debug print
-  
+    
   setLed(255, 0, 0); // set led to red
 
   MotorControl.motorsStop(); // stop motors
   machine_state = EXEC_ST; // set machine state to init
   comm_index = 0; // set comm index to 0 to restart at command 0 on the next run
-  
-  showBitmap(image_data_DISTRESSED_EYESarray);
-  tone(PIN_SPEAKER,single_note_c3,500); // play single note for user feedback
+
+  showBitmap(image_data_DISTRESSED_EYES);
+  tone(PIN_SPEAKER,NOTE_C3,500); // play single note for user feedback
   delay(STOP_EXEC_DELAY); // delay by STOP_EXEC_DELAY
-  showBitmap(image_data_EYES_FRONTarray);
+  //showBitmap(image_data_EYES_GLARE);
 }
 
 void set_stop_state(void){ // function that is called when stop button is pressed to change machine state
-  DEBUG_PRINTLN_FCT("exc set_stop_state fct"); // debug print
-  button_stop.loop(); // loop() for button_stop
-  button_stop_count = button_stop.getCount(); // get count of how often command button was pressed
   
-  if (button_stop_count >= 1) // check if stop button is pressed more then 0 times
-  {
+  if ((machine_state != INIT_ST) && (machine_state != START_EXEC_ST) && (machine_state != READ_COMM_ST)){
+    DEBUG_PRINTLN_FCT("exc set_stop_state fct"); // debug print
+    button_stop.loop(); // loop() for button_stop
+    button_stop_count = button_stop.getCount(); // get count of how often command button was pressed
     
-    machine_state = STOP_EXEC_ST; // set machine state
-    button_stop_count = 0; // reset button stop counter
-    button_stop.resetCount(); // reset button stop 
-  }
-  
+    if (button_stop_count >= 1) // check if stop button is pressed more then 0 times
+    {
+      machine_state = STOP_EXEC_ST; // set machine state
+      button_stop_count = 0; // reset button stop counter
+      button_stop.resetCount(); // reset button stop
+    }
+  } 
 } // set_stop_state
 
 void fsm(void) // finite state machine
@@ -473,9 +480,12 @@ void setup() // microcontroller setup runs once
   display.clearDisplay(); // Clear the buffer
   showBitmap(bitmap_uac_logo); // show uac logo
   delay(1000); // show UAC logo for 1 sec
-  showBitmap(image_data_EYES_FRONTarray);
+  showBitmap(image_data_EYES_MIDDLE);
+
+  //play startup melody
+  startup_melody();
   
-  // setup ez buttons debounce time to 50 milliseconds
+  // setup ez buttons debounce time
   button_command.setDebounceTime(button_debounce_time); 
   button_command.setCountMode(COUNT_FALLING);
   button_left.setDebounceTime(button_debounce_time);
@@ -483,6 +493,7 @@ void setup() // microcontroller setup runs once
   button_right.setDebounceTime(button_debounce_time);
   button_backwards.setDebounceTime(button_debounce_time);
   button_stop.setDebounceTime(button_debounce_time);
+  button_stop.setCountMode(COUNT_RISING);
 
   // Neopixel setup
   pixels.begin(); // INITIALIZE NeoPixel strip object
