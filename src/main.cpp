@@ -208,7 +208,7 @@ void turnRight(void) // function to turn right
 {
   DEBUG_PRINTLN_FCT("exc turnRight fct");
   DEBUG_PRINTLN_ACT("turn right");
-  showBitmap(image_data_EYES_RIGHT);
+  showBitmap(image_data_EYES_LEFT);
   if ((abs(encoder1_pos) < SETPOINT_TURN) &&
       (abs(encoder2_pos < SETPOINT_TURN)))
   {
@@ -241,7 +241,7 @@ void turnLeft(void) // function to turn left
 {
   DEBUG_PRINTLN_FCT("exc turnLeft fct");
   DEBUG_PRINTLN_ACT("turn left");
-  showBitmap(image_data_EYES_LEFT);
+  showBitmap(image_data_EYES_RIGHT);
   if ((abs(encoder1_pos) < SETPOINT_TURN) &&
       (abs(encoder2_pos < SETPOINT_TURN)))
   {
