@@ -108,7 +108,7 @@ double val_outputR;
 double enc_readL;
 double enc_readR;
 double Setpoint;
-double kp = 0.0001, ki = 0, kd = 0;
+double kp = 0.0001, ki = 0, kd = 0; // changes in ki & kd resulted in strange behaviour
 int    kspeed = 2;
 volatile int counterPID;
 int freq = 50;
@@ -125,7 +125,7 @@ int  encoder_table[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0 };
 ESP32MotorControl MotorControl = ESP32MotorControl();
 
 // initial motor speed
-int speedL = 24.98;
+int speedL = 24.98; // because azobopi floated to right side     
 int speedR = 25;
 
 // time motors are stopped
