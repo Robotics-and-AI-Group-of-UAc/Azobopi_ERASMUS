@@ -5,7 +5,7 @@
 //#define DEBUG_VAR
 #define DEBUG_ACT
 //#define DEBUG_FCT
-//#define DEBUG_STATE
+#define DEBUG_STATE
 
 #ifdef DEBUG_VAR
   #define DEBUG_PRINT_VAR(x) Serial.print(x)
@@ -33,7 +33,7 @@
   #define DEBUG_PRINTLN_STATE(x) Serial.print("Machine State: "); Serial.println(x)
 #else
   #define DEBUG_PRINTLN_STATE(x)
-#endif
+#endif // debug setup
 
 // include software header files
 #include <Arduino.h>
@@ -54,7 +54,7 @@ ezButton button_left(16);
 ezButton button_backwards(19);
 ezButton button_forwards(17);
 ezButton button_right(18);
-#define button_stop 5
+ezButton button_stop (5);
 
 // States
 #define VOID_ST 0
@@ -67,6 +67,8 @@ ezButton button_right(18);
 #define TURN_RIGHT_ST 7
 #define TURN_LEFT_ST 8
 #define BACK_ST 9
+#define STOP_EXEC_ST 10
+#define TUNE_ST 11
 
 // Movement Commands
 #define MAX_NR_COMMANDS 20
@@ -84,6 +86,7 @@ int recorded_button[MAX_NR_COMMANDS];
 int button_index = 0;
 int mov;                // Programed data from buttons
 unsigned long button_command_count;  // Nr. of times command button is pressed
+unsigned long button_stop_count = 0; // Nr. of times stop button is pressed
 
 int on_execute_test_st; // state control variable
 int on_execute_comm_st; // state control variable
@@ -97,7 +100,7 @@ int stop_next_state;
 #include "PID_simple.h"
 // SetPoints for PID
 #define SETPOINT_RUN 3900
-#define SETPOINT_TURN 1540
+#define SETPOINT_TURN 700
 
 unsigned long time_now;
 
@@ -106,7 +109,7 @@ double val_outputR;
 double enc_readL;
 double enc_readR;
 double Setpoint;
-double kp = 0.0007, ki = 0.000008, kd = 8;
+double kp = 0.0001, ki = 0, kd = 0; // changes in ki & kd resulted in strange behaviour
 int    kspeed = 2;
 volatile int counterPID;
 int freq = 50;
@@ -123,16 +126,17 @@ int  encoder_table[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0 };
 ESP32MotorControl MotorControl = ESP32MotorControl();
 
 // initial motor speed
-int speedL = 40;
-int speedR = 40;
+int speedL = 24.98; // because azobopi floated to right side     
+int speedR = 25;
 
 // time motors are stopped
 #define STOP_DELAY 500
+#define STOP_EXEC_DELAY 1000// delay after stop button is pressed
 
 // Wheels
 #define WHEEL_DIAMETER 66 // wheel diameter in mm
 #define WHEEL_CIRCUMFERENCE (3.14 * WHEEL_DIAMETER)
-#define WHEELS_DISTANCE 110
+#define WHEELS_DISTANCE 120
 #define CURVE_CIRCUMFERENCE (3.14 * WHEELS_DISTANCE)
 
 // Encoders pins
@@ -150,4 +154,30 @@ portMUX_TYPE counterMux = portMUX_INITIALIZER_UNLOCKED;
 PID pidleft(&Setpoint, &enc_readL, &val_outputL, kp, ki, kd);
 PID pidright(&Setpoint, &enc_readR, &val_outputR, kp, ki, kd);
 
+// OLED DISPLAY SSD1306
+
+#include <SPI.h> // inlucde libraries for use of OLED
+#include <Wire.h> // inlucde libraries for use of OLED
+#include <Adafruit_GFX.h> // inlucde libraries for use of OLED
+#include <Adafruit_SSD1306.h> // inlucde libraries for use of OLED
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET     4 // Reset pin # (or -1 if sharing Arduino reset pin)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// Display bitmaps
+
+#define bitmap_height   128 // define bitmap size
+#define bitmap_width    64  // define bitmap size
+
+#include "displayuaclogo.h"
+#include "smileys.h"
 #endif // ifndef main_h
+
+// Speaker setup
+
+#define PIN_SPEAKER 12
+#include "sounds.h"
