@@ -68,6 +68,7 @@ ezButton button_stop (5);
 #define TURN_LEFT_ST 8
 #define BACK_ST 9
 #define STOP_EXEC_ST 10
+#define TUNE_ST 11
 
 // Movement Commands
 #define MAX_NR_COMMANDS 20

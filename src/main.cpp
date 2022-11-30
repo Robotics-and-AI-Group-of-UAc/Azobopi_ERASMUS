@@ -455,6 +455,11 @@ void fsm(void) // finite state machine
     stop_exec(); //execute func
     break;
 
+  case TUNE_ST: // execute tune state 
+    last_machine_state = machine_state; // set last machine state
+    //tune(); // function to be written
+    break;
+
   case VOID_ST: // execute void state 
     // put code here
     break;
@@ -479,7 +484,7 @@ void setup() // microcontroller setup runs once
   }
   display.clearDisplay(); // Clear the buffer
   showBitmap(bitmap_uac_logo); // show uac logo
-  delay(1000); // show UAC logo for 1 sec
+  delay(500); // show UAC logo for 0.5 sec
   showBitmap(image_data_EYES_MIDDLE);
 
   //play startup melody
