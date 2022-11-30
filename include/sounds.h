@@ -100,6 +100,12 @@ void startup_melody(){
   delay(250);
 }
 
+void stop_melody(){
+  tone(PIN_SPEAKER,NOTE_C3,300); // play single note for user feedback
+  delay(500);
+  tone(PIN_SPEAKER,NOTE_C3,300); // play single note for user feedback
+}
+
 void finish_melody(){
   tone(PIN_SPEAKER,NOTE_D5,250);
   delay(250);

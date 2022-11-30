@@ -368,9 +368,7 @@ void stop_exec(void) // function to stop execution of current run
   comm_index = 0; // set comm index to 0 to restart at command 0 on the next run
 
   showBitmap(image_data_DISTRESSED_EYES);
-  tone(PIN_SPEAKER,NOTE_C3,500); // play single note for user feedback
-  delay(STOP_EXEC_DELAY); // delay by STOP_EXEC_DELAY
-  //showBitmap(image_data_EYES_GLARE);
+  stop_melody();
 }
 
 void set_stop_state(void){ // function that is called when stop button is pressed to change machine state
