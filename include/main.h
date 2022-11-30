@@ -67,8 +67,8 @@ ezButton button_stop (5);
 #define TURN_RIGHT_ST 7
 #define TURN_LEFT_ST 8
 #define BACK_ST 9
-#define STOP_EXEC_ST 10
-#define TUNE_ST 11
+#define TUNE_ST 10
+#define WAIT_ST 11
 
 // Movement Commands
 #define MAX_NR_COMMANDS 20
@@ -77,6 +77,7 @@ ezButton button_stop (5);
 #define TURN_RIGHT 3
 #define FORWARD 2
 #define BACKWARD 4
+#define WAIT 5
 #define ROTATION_TICKS 1920
 
 // commands
@@ -131,7 +132,9 @@ int speedR = 25;
 
 // time motors are stopped
 #define STOP_DELAY 500
-#define STOP_EXEC_DELAY 1000// delay after stop button is pressed
+#define WAIT_DELAY 2000 // time the robo is waiting in delay state
+unsigned long time_wait; // waiting timer
+bool reset_time_wait = 1; // bool to reset waiting timer
 
 // Wheels
 #define WHEEL_DIAMETER 66 // wheel diameter in mm
