@@ -110,10 +110,10 @@ double val_outputR;
 double enc_readL;
 double enc_readR;
 double Setpoint;
-double kp = 0.0001, ki = 0, kd = 0; // changes in ki & kd resulted in strange behaviour
-int    kspeed = 2;
+double kp = 0, ki = 0, kd = 0; // changes in ki & kd resulted in strange behaviour
+int    kspeed = 1;
 volatile int counterPID;
-int freq = 50;
+int freq = 20000;
 
 // Encoders Interrupt function variables and table
 volatile double encoder1_pos;
@@ -126,12 +126,19 @@ int  encoder_table[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0 };
 // Initialize motors library
 ESP32MotorControl MotorControl = ESP32MotorControl();
 
+// initial straight run
+int straight_run = -1.2;     // increase to go right 
+
 // initial motor speed
-int speedL = 24.98; // because azobopi floated to right side     
-int speedR = 25;
+int speedL = 60;   
+int speedR = 60;
+
+// motor speed for turning -> set lower fixed speed for turning
+int turnspeedL = 60;
+int turnspeedR = 60;
 
 // time motors are stopped
-#define STOP_DELAY 500
+#define STOP_DELAY 1000
 #define WAIT_DELAY 2000 // time the robo is waiting in delay state
 unsigned long time_wait; // waiting timer
 bool reset_time_wait = 1; // bool to reset waiting timer

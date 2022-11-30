@@ -248,8 +248,8 @@ void turnRight(void) // function to turn right
   {
     startTimer();
 
-    int vel = kspeed * (speedL + val_outputL);
-    int ver = kspeed * (speedR + val_outputR);
+    int vel = kspeed * (turnspeedL + val_outputL) + straight_run; // straight_run makes sure robo turns accurate
+    int ver = kspeed * (turnspeedR + val_outputR) - straight_run;
     MotorControl.motorReverse(0, vel);
     MotorControl.motorForward(1, ver);
 
@@ -281,8 +281,8 @@ void turnLeft(void) // function to turn left
       (abs(encoder2_pos < SETPOINT_TURN)))
   {
     startTimer();
-    int vel = kspeed * (speedL + val_outputL);
-    int ver = kspeed * (speedR + val_outputR);
+    int vel = kspeed * (turnspeedL + val_outputL) + straight_run; // straight_run makes sure robo turns accurate
+    int ver = kspeed * (turnspeedR + val_outputR) - straight_run;
     MotorControl.motorForward(0, vel);
     MotorControl.motorReverse(1, ver);
 
@@ -314,8 +314,8 @@ void forward(void) // function to drive forwards
       (abs(encoder2_pos) < SETPOINT_RUN)) {
     startTimer();
 
-    int vel = kspeed * (speedL + val_outputL);
-    int ver = kspeed * (speedR + val_outputR);
+    int vel = kspeed * (speedL + val_outputL) + straight_run; // straight_run -> make sure robo goes straight
+    int ver = kspeed * (speedR + val_outputR) - straight_run;
     MotorControl.motorReverse(0, vel);
     MotorControl.motorReverse(1, ver);
 
@@ -347,10 +347,10 @@ void back(void) // function to drive backwards
       (abs(encoder2_pos) < SETPOINT_RUN)) {
     startTimer();
 
-    int vel = kspeed * (speedL + val_outputL);
-    int ver = kspeed * (speedR + val_outputR);
-    MotorControl.motorForward(0, vel);
-    MotorControl.motorForward(1, ver);
+    int vel = kspeed * (speedL + val_outputL) - straight_run; // straight_run -> make sure robo goes straight
+    int ver = kspeed * (speedR + val_outputR) + straight_run;
+    MotorControl.motorForward(1, vel);
+    MotorControl.motorForward(0, ver);
 
     if (counterPID > freq) {
       portENTER_CRITICAL_ISR(&counterMux);
