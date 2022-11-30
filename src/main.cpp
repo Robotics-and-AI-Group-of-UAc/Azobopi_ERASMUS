@@ -137,6 +137,13 @@ void init(void) // function to init the the robo
   if (button_command_count == 0) {
     on_execute_comm_st = 0;
   }
+
+  if (button_stop_count == 1) //switch to tune state
+  {
+    machine_state = TUNE_ST;
+  }
+
+
 }
 
 void readComm(void) // funciton to read movement commands
@@ -375,7 +382,7 @@ void stop_exec(void) // function to stop execution of current run
 
 void set_stop_state(void){ // function that is called when stop button is pressed to change machine state
   
-  if ((machine_state != INIT_ST) && (machine_state != START_EXEC_ST) && (machine_state != READ_COMM_ST)){
+  if ((machine_state != TUNE_ST) && (machine_state != INIT_ST) && (machine_state != START_EXEC_ST) && (machine_state != READ_COMM_ST)){
     DEBUG_PRINTLN_FCT("exc set_stop_state fct"); // debug print
     button_stop.loop(); // loop() for button_stop
     button_stop_count = button_stop.getCount(); // get count of how often command button was pressed
@@ -389,6 +396,52 @@ void set_stop_state(void){ // function that is called when stop button is presse
   } 
 } // set_stop_state
 
+void tune(){
+  setLed(255, 127, 0);               // set LED to orange
+  DEBUG_PRINTLN_FCT("exc read_tune_buttons fct"); //debug print
+  button_right.loop(); //read right button
+
+  if (button_right.isPressed()) {   //check if right button is pressed
+    if (tune_counter_turn+2 <= num_setpoint_values_turn)
+    {
+      tune_counter_turn++; //add 1 to the tune_counter 
+      DEBUG_PRINTLN_ACT("Tune Counter: ");
+      DEBUG_PRINTLN_ACT(tune_counter_turn);
+      
+      setpoint_turn = setpoint_values_turn[tune_counter_turn];
+      DEBUG_PRINT_ACT("New Setpoint Value: ");
+      DEBUG_PRINTLN_ACT(setpoint_turn);
+      tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
+      DEBUG_PRINTLN_ACT("button right is pressed"); // debug print
+    }
+  }
+   
+  button_left.loop(); //read right button
+
+  if (button_left.isPressed()) {   //check if right button is pressed
+    if (tune_counter_turn >=1 && tune_counter_turn+1<=num_setpoint_values_turn)
+    {
+      tune_counter_turn--; //add 1 to the tune_counter 
+      DEBUG_PRINTLN_ACT("Tune Counter: ");
+      DEBUG_PRINTLN_ACT(tune_counter_turn);
+
+      setpoint_turn = setpoint_values_turn[tune_counter_turn];
+      DEBUG_PRINT_ACT("New Setpoint Value: ");
+      DEBUG_PRINTLN_ACT(setpoint_turn);
+      tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
+      DEBUG_PRINTLN_ACT("button left is pressed"); // debug print
+    }
+  }
+
+
+if (button_stop_count == 2) //switch to tune state
+  {
+    machine_state = INIT_ST;
+    button_stop_count = 0; // reset button stop counter
+    button_stop.resetCount(); // reset button stop
+  }
+}
+
 void fsm(void) // finite state machine
 {
   DEBUG_PRINTLN_FCT("exc fsm fct");
@@ -397,6 +450,9 @@ void fsm(void) // finite state machine
 
   button_command.loop(); // loop() for button_command
   button_command_count = button_command.getCount(); // get count of how often command button was pressed
+
+  button_stop.loop();
+  button_stop_count = button_stop.getCount();
   
   DEBUG_PRINT_VAR("button_command_count: "); // debug print
   DEBUG_PRINTLN_VAR(button_command_count); // debug print
@@ -457,7 +513,7 @@ void fsm(void) // finite state machine
 
   case TUNE_ST: // execute tune state 
     last_machine_state = machine_state; // set last machine state
-    //tune(); // function to be written
+    tune(); // tune func
     break;
 
   case VOID_ST: // execute void state 
@@ -522,4 +578,5 @@ void loop() // microcontroller loop function
   DEBUG_PRINTLN_FCT("exc microcontoller loop fct"); // debug print
   fsm(); // execute finite state machine
   show_state(); // execute show state fct for debugging
+  
 }

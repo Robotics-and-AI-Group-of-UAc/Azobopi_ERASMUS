@@ -1,8 +1,17 @@
+// tune 
+int tune_counter_turn = 2; // default value of tune_conter_turn 0-5
+int setpoint_values_turn[]={000,100,200,300,400,500};
+int setpoint_turn = setpoint_values_turn[tune_counter_turn];
+int num_setpoint_values_turn = sizeof(setpoint_values_turn)/sizeof(int);
+
+
+
+
 #ifndef main_h // ifndef main_h to prevent double declaration of any identifiers such as types, enums and static variables
 #define main_h // ifndef main_h 
 
 // debug setup
-//#define DEBUG_VAR
+// #define DEBUG_VAR
 #define DEBUG_ACT
 //#define DEBUG_FCT
 #define DEBUG_STATE
