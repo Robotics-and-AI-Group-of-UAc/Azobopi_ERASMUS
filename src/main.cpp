@@ -567,6 +567,18 @@ void setup() // microcontroller setup runs once
   pinMode(ENC2_A, INPUT);
   pinMode(ENC2_B, INPUT);
 
+
+  // Creats array with tuning setpoints for turn movement
+  for (int c = 0; c < num_setpoint_values; c++)
+  {
+    // map(value, fromLow, from High, toLow, toHigh)
+    setpoint_values_turn_array[c] = map(c,0,num_setpoint_values-1,setpoint_turn_min,setpoint_turn_max); 
+    Serial.println(setpoint_values_turn_array[c]);
+    int a = 7/3;
+    Serial.println(a);
+  }
+  
+
   // Motor Pins
   MotorControl.attachMotors(25, 26, 32, 33); //ROBOT José trocar 25 por 27
 
