@@ -399,13 +399,14 @@ void set_stop_state(void){ // function that is called when stop button is presse
 void tune(){
   setLed(255, 127, 0);               // set LED to orange
   DEBUG_PRINTLN_FCT("exc read_tune_buttons fct"); //debug print
+  
   button_right.loop(); //read right button
 
   if (button_right.isPressed()) {   //check if right button is pressed
-    if (tune_counter_turn+2 <= num_setpoint_values_turn)
+    if (tune_counter_turn < num_setpoint_values_turn) 
     {
       tune_counter_turn++; //add 1 to the tune_counter 
-      DEBUG_PRINTLN_ACT("Tune Counter: ");
+      DEBUG_PRINT_ACT("Tune Counter: ");
       DEBUG_PRINTLN_ACT(tune_counter_turn);
       
       setpoint_turn = setpoint_values_turn[tune_counter_turn];
@@ -416,13 +417,13 @@ void tune(){
     }
   }
    
-  button_left.loop(); //read right button
+  button_left.loop(); //read left button
 
-  if (button_left.isPressed()) {   //check if right button is pressed
-    if (tune_counter_turn >=1 && tune_counter_turn+1<=num_setpoint_values_turn)
+  if (button_left.isPressed()) {   //check if left button is pressed
+    if (tune_counter_turn >=1 && tune_counter_turn <= num_setpoint_values_turn)
     {
-      tune_counter_turn--; //add 1 to the tune_counter 
-      DEBUG_PRINTLN_ACT("Tune Counter: ");
+      tune_counter_turn--; //subtract 1 from the tune_counter 
+      DEBUG_PRINT_ACT("Tune Counter: ");
       DEBUG_PRINTLN_ACT(tune_counter_turn);
 
       setpoint_turn = setpoint_values_turn[tune_counter_turn];
@@ -434,13 +435,14 @@ void tune(){
   }
 
 
-if (button_stop_count == 2) //switch to tune state
+if (button_stop_count == 2) //switch to INIT state
   {
     machine_state = INIT_ST;
     button_stop_count = 0; // reset button stop counter
     button_stop.resetCount(); // reset button stop
   }
 }
+
 
 void fsm(void) // finite state machine
 {
@@ -569,15 +571,22 @@ void setup() // microcontroller setup runs once
 
 
   // Creats array with tuning setpoints for turn movement
-  for (int c = 0; c < num_setpoint_values; c++)
+  for (int c = 0; c < num_setpoint_values_turn; c++)
   {
     // map(value, fromLow, from High, toLow, toHigh)
-    setpoint_values_turn_array[c] = map(c,0,num_setpoint_values-1,setpoint_turn_min,setpoint_turn_max); 
-    Serial.println(setpoint_values_turn_array[c]);
-    int a = 7/3;
-    Serial.println(a);
+    setpoint_values_turn[c] = map(c,0,num_setpoint_values_turn-1,setpoint_turn_min,setpoint_turn_max); 
+    Serial.println(setpoint_values_turn[c]);
+
   }
   
+  // Sets default value of tune counter in the middle of the number of possible tuning setpoints
+  tune_counter_turn = num_setpoint_values_turn/2;
+  Serial.println(tune_counter_turn);
+
+  // Sets default value of SETPOINT TURN in the middle of the number of possible tuning setpoints
+  setpoint_turn = setpoint_values_turn[tune_counter_turn];
+  Serial.println(setpoint_turn);
+
 
   // Motor Pins
   MotorControl.attachMotors(25, 26, 32, 33); //ROBOT José trocar 25 por 27

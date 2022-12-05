@@ -1,15 +1,17 @@
-// tune 
-int tune_counter_turn = 2; // default value of tune_conter_turn 0-5
-int setpoint_values_turn[]={000,100,200,300,400,500};
-int setpoint_turn = setpoint_values_turn[tune_counter_turn]; // to be replaced by SETPOINT_TURN
-int num_setpoint_values_turn = sizeof(setpoint_values_turn)/sizeof(int);
+//TO DO:
+// maybe put the calculation of tuning stuff in an own function and just call that function in the setup()
 
 // tune turn movement
-#define num_setpoint_values 6 // number of possible tuning setpoints in equivalent distances
-int setpoint_values_turn_array[num_setpoint_values];
-int setpoint_turn_min = 400;
-int setpoint_turn_max = 1600;
+#define num_setpoint_values_turn 11 // number of possible tuning setpoints in equivalent distances
+int setpoint_values_turn[num_setpoint_values_turn];
+int setpoint_turn_min = 1000;
+int setpoint_turn_max = 2000;
+int tune_counter_turn;
+int setpoint_turn; // to be replaced by int SETPOINT_TURN
 
+// SetPoints for PID
+#define SETPOINT_RUN 3900 // to be replaced as integers 
+#define SETPOINT_TURN 700 // to be replaced as integers, see above
 
 #ifndef main_h // ifndef main_h to prevent double declaration of any identifiers such as types, enums and static variables
 #define main_h // ifndef main_h 
@@ -111,9 +113,6 @@ int stop_next_state;
 
 // PID
 #include "PID_simple.h"
-// SetPoints for PID
-#define SETPOINT_RUN 3900
-#define SETPOINT_TURN 700
 
 unsigned long time_now;
 
