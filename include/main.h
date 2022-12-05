@@ -1,10 +1,14 @@
 // tune 
 int tune_counter_turn = 2; // default value of tune_conter_turn 0-5
 int setpoint_values_turn[]={000,100,200,300,400,500};
-int setpoint_turn = setpoint_values_turn[tune_counter_turn];
+int setpoint_turn = setpoint_values_turn[tune_counter_turn]; // to be replaced by SETPOINT_TURN
 int num_setpoint_values_turn = sizeof(setpoint_values_turn)/sizeof(int);
 
-
+// tune turn movement
+#define num_setpoint_values 6 // number of possible tuning setpoints in equivalent distances
+int setpoint_values_turn_array[num_setpoint_values];
+int setpoint_turn_min = 400;
+int setpoint_turn_max = 1600;
 
 
 #ifndef main_h // ifndef main_h to prevent double declaration of any identifiers such as types, enums and static variables
