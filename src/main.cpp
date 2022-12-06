@@ -28,6 +28,25 @@ void IRAM_ATTR onTimer()
   portEXIT_CRITICAL_ISR(&timerMux);
 }
 
+void tuningSetup()
+{
+  // Creats array with tuning setpoints for turn movement
+  for (int c = 0; c < num_setpoint_values_turn; c++)
+  {
+    // map(value, fromLow, from High, toLow, toHigh)
+    setpoint_values_turn[c] = map(c,0,num_setpoint_values_turn-1,setpoint_turn_min,setpoint_turn_max); 
+    Serial.println(setpoint_values_turn[c]);
+  }
+  
+  // Sets default value of tune counter in the middle of the number of possible tuning setpoints
+  tune_counter_turn = num_setpoint_values_turn/2;
+  Serial.println(tune_counter_turn);
+
+  // Sets default value of SETPOINT TURN in the middle of the number of possible tuning setpoints
+  SETPOINT_TURN = setpoint_values_turn[tune_counter_turn];
+  Serial.println(SETPOINT_TURN);
+}
+
 void startTimer()
 {
   if (timer == NULL) {
@@ -184,6 +203,24 @@ void startExec(void) // function to start execution of commands
   }
 }
 
+void stopExec(void){
+  button_stop.loop(); 
+  if (button_stop.isPressed()){ // check if stop button is pressed, if yes stop current run of commands and go back to START_EXEC_ST
+    MotorControl.motorsStop(); // stop motors
+    setLed(255, 0, 0); // set led to red
+
+    comm_index = 0; // set comm index to 0 to restart at command 0 on the next run
+    
+    showBitmap(image_data_DISTRESSED_EYES);
+    stop_melody();
+
+    button_forwards.loop();
+    if (button_forwards.isReleased()) { // wait till button releases state
+      machine_state = START_EXEC_ST;
+    }
+  }
+}
+
 void exec(void) // function to execut the movement commands
 {
   DEBUG_PRINTLN_FCT("exc exec fct"); // debug print
@@ -222,7 +259,7 @@ void turnRight(void) // function to turn right
       (abs(encoder2_pos < SETPOINT_TURN)))
   {
     startTimer();
-
+    Serial.print(SETPOINT_TURN);
     int vel = kspeed * (speedL + val_outputL);
     int ver = kspeed * (speedR + val_outputR);
     MotorControl.motorReverse(0, vel);
@@ -359,46 +396,38 @@ void stop(void) // function that is called between movemnts
   DEBUG_PRINTLN_FCT("exc stop fct"); // debug print
   DEBUG_PRINTLN_ACT("stop"); // debug print
   MotorControl.motorsStop(); // stop motors
-
+  
   if (millis() >= time_now + STOP_DELAY) {
     machine_state = stop_next_state; 
   }
-}
-
-void stop_exec(void) // function to stop execution of current run
-{
-  DEBUG_PRINTLN_FCT("exc stop_exec fct"); // debug print
-  DEBUG_PRINTLN_ACT("stop exec"); // debug print
-    
-  setLed(255, 0, 0); // set led to red
-
-  MotorControl.motorsStop(); // stop motors
-  machine_state = EXEC_ST; // set machine state to init
-  comm_index = 0; // set comm index to 0 to restart at command 0 on the next run
-
-  showBitmap(image_data_DISTRESSED_EYES);
-  tone(PIN_SPEAKER,NOTE_C3,500); // play single note for user feedback
-  delay(STOP_EXEC_DELAY); // delay by STOP_EXEC_DELAY
-  //showBitmap(image_data_EYES_GLARE);
-}
-
-void set_stop_state(void){ // function that is called when stop button is pressed to change machine state
   
-  if ((machine_state != TUNE_ST) && (machine_state != INIT_ST) && (machine_state != START_EXEC_ST) && (machine_state != READ_COMM_ST)){
-    DEBUG_PRINTLN_FCT("exc set_stop_state fct"); // debug print
-    button_stop.loop(); // loop() for button_stop
-    button_stop_count = button_stop.getCount(); // get count of how often command button was pressed
-    
-    if (button_stop_count >= 1) // check if stop button is pressed more then 0 times
-    {
-      machine_state = STOP_EXEC_ST; // set machine state
-      button_stop_count = 0; // reset button stop counter
-      button_stop.resetCount(); // reset button stop
-    }
-  } 
-} // set_stop_state
+  stopExec(); // stop current execution
+  
+}
 
-void tune(){
+void wait(void) // function to wait
+{
+  DEBUG_PRINTLN_FCT("exc wait fct");
+  DEBUG_PRINTLN_ACT("wait");
+  showBitmap(image_data__EYES_BLANK);
+  
+  if (reset_time_wait){
+    time_wait = millis();
+    reset_time_wait = 0;
+  }
+
+  if (millis() >= time_wait + WAIT_DELAY){
+    stop_next_state = EXEC_ST;
+    machine_state   = STOP_ST;
+    time_now = millis();
+    reset_time_wait = 1;
+  }
+
+  stopExec(); // stop current execution 
+}
+
+void tune()
+{
   DEBUG_PRINTLN_FCT("exc read_tune_buttons fct"); //debug print
   
   button_right.loop(); //read right button
@@ -410,9 +439,9 @@ void tune(){
       DEBUG_PRINT_ACT("Tune Counter: ");
       DEBUG_PRINTLN_ACT(tune_counter_turn);
       
-      setpoint_turn = setpoint_values_turn[tune_counter_turn];
+      SETPOINT_TURN = setpoint_values_turn[tune_counter_turn];
       DEBUG_PRINT_ACT("New Setpoint Value: ");
-      DEBUG_PRINTLN_ACT(setpoint_turn);
+      DEBUG_PRINTLN_ACT(SETPOINT_TURN);
       tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
       DEBUG_PRINTLN_ACT("button right is pressed"); // debug print
       int brightness = map(tune_counter_turn,0,num_setpoint_values_turn,0,255);
@@ -431,9 +460,9 @@ void tune(){
       DEBUG_PRINT_ACT("Tune Counter: ");
       DEBUG_PRINTLN_ACT(tune_counter_turn);
 
-      setpoint_turn = setpoint_values_turn[tune_counter_turn];
+      SETPOINT_TURN = setpoint_values_turn[tune_counter_turn];
       DEBUG_PRINT_ACT("New Setpoint Value: ");
-      DEBUG_PRINTLN_ACT(setpoint_turn);
+      DEBUG_PRINTLN_ACT(SETPOINT_TURN);
       tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
       DEBUG_PRINTLN_ACT("button left is pressed"); // debug print
       int brightness = map(tune_counter_turn,0,num_setpoint_values_turn,0,255);
@@ -453,12 +482,9 @@ if (button_stop_count == 2) //switch to INIT state
   }
 }
 
-
 void fsm(void) // finite state machine
 {
   DEBUG_PRINTLN_FCT("exc fsm fct");
-  
-  set_stop_state(); // call fct to check if stop button was pressed
 
   button_command.loop(); // loop() for button_command
   button_command_count = button_command.getCount(); // get count of how often command button was pressed
@@ -517,15 +543,15 @@ void fsm(void) // finite state machine
     last_machine_state = machine_state; // set last machine state
     stop(); //execute func
     break;
-  
-  case STOP_EXEC_ST: // execute STOP_EXEC state 
-    last_machine_state = machine_state; // set last machine state
-    stop_exec(); //execute func
-    break;
 
   case TUNE_ST: // execute tune state 
     last_machine_state = machine_state; // set last machine state
-    tune(); // tune func
+    tune(); // function to be written
+    break;
+
+  case WAIT_ST: // execute tune state 
+    last_machine_state = machine_state; // set last machine state
+    wait(); // execute func
     break;
 
   case VOID_ST: // execute void state 
@@ -579,27 +605,11 @@ void setup() // microcontroller setup runs once
   pinMode(ENC2_A, INPUT);
   pinMode(ENC2_B, INPUT);
 
-
-  // Creats array with tuning setpoints for turn movement
-  for (int c = 0; c < num_setpoint_values_turn; c++)
-  {
-    // map(value, fromLow, from High, toLow, toHigh)
-    setpoint_values_turn[c] = map(c,0,num_setpoint_values_turn-1,setpoint_turn_min,setpoint_turn_max); 
-    Serial.println(setpoint_values_turn[c]);
-
-  }
-  
-  // Sets default value of tune counter in the middle of the number of possible tuning setpoints
-  tune_counter_turn = num_setpoint_values_turn/2;
-  Serial.println(tune_counter_turn);
-
-  // Sets default value of SETPOINT TURN in the middle of the number of possible tuning setpoints
-  setpoint_turn = setpoint_values_turn[tune_counter_turn];
-  Serial.println(setpoint_turn);
-
-
   // Motor Pins
   MotorControl.attachMotors(25, 26, 32, 33); //ROBOT José trocar 25 por 27
+
+  // Tuning Setup
+  tuningSetup();
 
   machine_state = INIT_ST; // set machine to init state
 }

@@ -1,18 +1,3 @@
-//TO DO:
-// maybe put the calculation of tuning stuff in an own function and just call that function in the setup()
-
-// tune turn movement
-#define num_setpoint_values_turn 6 // number of possible tuning setpoints in equivalent distances
-int setpoint_values_turn[num_setpoint_values_turn];
-int setpoint_turn_min = 1000;
-int setpoint_turn_max = 2000;
-int tune_counter_turn;
-int setpoint_turn; // to be replaced by int SETPOINT_TURN
-
-// SetPoints for PID
-#define SETPOINT_RUN 3900 // to be replaced as integers 
-#define SETPOINT_TURN 700 // to be replaced as integers, see above
-
 #ifndef main_h // ifndef main_h to prevent double declaration of any identifiers such as types, enums and static variables
 #define main_h // ifndef main_h 
 
@@ -82,8 +67,8 @@ ezButton button_stop (5);
 #define TURN_RIGHT_ST 7
 #define TURN_LEFT_ST 8
 #define BACK_ST 9
-#define STOP_EXEC_ST 10
-#define TUNE_ST 11
+#define TUNE_ST 10
+#define WAIT_ST 11
 
 // Movement Commands
 #define MAX_NR_COMMANDS 20
@@ -121,10 +106,23 @@ double val_outputR;
 double enc_readL;
 double enc_readR;
 double Setpoint;
-double kp = 0.0001, ki = 0, kd = 0; // changes in ki & kd resulted in strange behaviour
-int    kspeed = 2;
+double kp = 0, ki = 0, kd = 0; // changes in ki & kd resulted in strange behaviour
+int    kspeed = 1;
 volatile int counterPID;
-int freq = 50;
+int freq = 20000;
+
+// tune turn movement
+#define num_setpoint_values_turn 7 // number of possible tuning setpoints in equivalent distances
+int setpoint_values_turn[num_setpoint_values_turn];
+int setpoint_turn_min = 700;
+int setpoint_turn_max = 800;
+int tune_counter_turn;
+int SETPOINT_TURN; 
+
+// SetPoints for PID
+#define SETPOINT_RUN 3900 // to be replaced as integers 
+
+
 
 // Encoders Interrupt function variables and table
 volatile double encoder1_pos;
@@ -137,13 +135,22 @@ int  encoder_table[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0 };
 // Initialize motors library
 ESP32MotorControl MotorControl = ESP32MotorControl();
 
+// initial straight run
+int straight_run = -1.2;     // increase to go right 
+
 // initial motor speed
-int speedL = 24.98; // because azobopi floated to right side     
-int speedR = 25;
+int speedL = 60; // because azobopi floated to right side     
+int speedR = 60;
+
+// motor speed for turning -> set lower fixed speed for turning
+int turnspeedL = 60;
+int turnspeedR = 60;
 
 // time motors are stopped
-#define STOP_DELAY 500
-#define STOP_EXEC_DELAY 1000// delay after stop button is pressed
+#define STOP_DELAY 1000
+#define WAIT_DELAY 2000 // time the robo is waiting in delay state
+unsigned long time_wait; // waiting timer
+bool reset_time_wait = 1; // bool to reset waiting timer
 
 // Wheels
 #define WHEEL_DIAMETER 66 // wheel diameter in mm
