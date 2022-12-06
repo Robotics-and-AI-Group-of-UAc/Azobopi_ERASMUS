@@ -2,7 +2,7 @@
 // maybe put the calculation of tuning stuff in an own function and just call that function in the setup()
 
 // tune turn movement
-#define num_setpoint_values_turn 11 // number of possible tuning setpoints in equivalent distances
+#define num_setpoint_values_turn 6 // number of possible tuning setpoints in equivalent distances
 int setpoint_values_turn[num_setpoint_values_turn];
 int setpoint_turn_min = 1000;
 int setpoint_turn_max = 2000;

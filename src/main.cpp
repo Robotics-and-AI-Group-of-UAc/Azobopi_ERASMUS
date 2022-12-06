@@ -140,7 +140,9 @@ void init(void) // function to init the the robo
 
   if (button_stop_count == 1) //switch to tune state
   {
+    setLed(255,0,125); // set LED to raspberry
     machine_state = TUNE_ST;
+    
   }
 
 
@@ -397,13 +399,12 @@ void set_stop_state(void){ // function that is called when stop button is presse
 } // set_stop_state
 
 void tune(){
-  setLed(255, 127, 0);               // set LED to orange
   DEBUG_PRINTLN_FCT("exc read_tune_buttons fct"); //debug print
   
   button_right.loop(); //read right button
 
   if (button_right.isPressed()) {   //check if right button is pressed
-    if (tune_counter_turn < num_setpoint_values_turn) 
+    if (tune_counter_turn+1 < num_setpoint_values_turn) 
     {
       tune_counter_turn++; //add 1 to the tune_counter 
       DEBUG_PRINT_ACT("Tune Counter: ");
@@ -414,7 +415,11 @@ void tune(){
       DEBUG_PRINTLN_ACT(setpoint_turn);
       tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
       DEBUG_PRINTLN_ACT("button right is pressed"); // debug print
-    }
+      int brightness = map(tune_counter_turn,0,num_setpoint_values_turn,0,255);
+      pixels.setBrightness(brightness); // adjust brightness of LED for optical user feedback
+      setLed(125, 255, 0);               // set LED to green
+
+     }
   }
    
   button_left.loop(); //read left button
@@ -431,15 +436,20 @@ void tune(){
       DEBUG_PRINTLN_ACT(setpoint_turn);
       tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
       DEBUG_PRINTLN_ACT("button left is pressed"); // debug print
+      int brightness = map(tune_counter_turn,0,num_setpoint_values_turn,0,255);
+      pixels.setBrightness(brightness); // adjust brightness of LED for optical user feedback
+      setLed(125, 255, 0);               // set LED to green
     }
   }
 
+  
 
 if (button_stop_count == 2) //switch to INIT state
   {
     machine_state = INIT_ST;
     button_stop_count = 0; // reset button stop counter
     button_stop.resetCount(); // reset button stop
+    pixels.setBrightness(255); // reset brightness of LED after tune state 
   }
 }
 
