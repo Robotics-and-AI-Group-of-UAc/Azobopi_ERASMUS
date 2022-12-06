@@ -1,5 +1,16 @@
 #include "main.h"
 
+float map_values(float x, float in_min, float in_max, float out_min, float out_max) {
+    const float run = in_max - in_min;
+    if(run == 0){
+        log_e("map(): Invalid input range, min == max");
+        return -1; // AVR returns -1, SAM returns 0
+    }
+    const float rise = out_max - out_min;
+    const float delta = x - in_min;
+    return (delta * rise) / run + out_min;
+}
+
 void Encoders_Interrupt(void)
 {
   byte next_state, table_input;
@@ -26,6 +37,53 @@ void IRAM_ATTR onTimer()
   portENTER_CRITICAL_ISR(&timerMux);
   Encoders_Interrupt();
   portEXIT_CRITICAL_ISR(&timerMux);
+}
+
+void tuningSetupTurn()
+{
+  // Creats array with tuning setpoints for turn movement
+  for (int c = 0; c < num_setpoint_values_turn; c++)
+  {
+    // map(value, fromLow, from High, toLow, toHigh)
+    setpoint_values_turn[c] = map(c,0,num_setpoint_values_turn-1,setpoint_turn_min,setpoint_turn_max); 
+  }
+  
+  // Sets default value of tune counter in the middle of the number of possible tuning setpoints
+  tune_counter_turn = num_setpoint_values_turn/2;
+ 
+  // Sets default value of SETPOINT TURN in the middle of the number of possible tuning setpoints
+  SETPOINT_TURN = setpoint_values_turn[tune_counter_turn];
+
+
+  // Creats array with tuning setpoints for forward/backward movement
+  for (int c = 0; c < num_setpoint_values_move; c++)
+  {
+    // map(value, fromLow, from High, toLow, toHigh)
+    setpoint_values_move[c] = map(c,0,num_setpoint_values_turn-1,setpoint_turn_min,setpoint_turn_max); 
+  }
+  
+  // Sets default value of tune counter in the middle of the number of possible tuning setpoints
+  tune_counter_turn = num_setpoint_values_turn/2;
+ 
+  // Sets default value of SETPOINT TURN in the middle of the number of possible tuning setpoints
+  SETPOINT_TURN = setpoint_values_turn[tune_counter_turn];
+}
+
+void tuningSetupMove()
+{
+  // Creats array with tuning setpoints for forward/backward movement
+  for (int c = 0; c < num_setpoint_values_move; c++)
+  {
+    // map(value, fromLow, from High, toLow, toHigh)
+    setpoint_values_move[c] = map_values(c,0,num_setpoint_values_move-1,setpoint_move_min,setpoint_move_max); 
+    Serial.println(setpoint_values_move[c]);
+  }
+  
+  // Sets default value of tune counter in the middle of the number of possible tuning setpoints
+  tune_counter_move = num_setpoint_values_move/2;
+ 
+  // Sets default value of SETPOINT straight run in the middle of the number of possible tuning setpoints
+  setpoint_straight_run = setpoint_values_move[tune_counter_move];
 }
 
 void startTimer()
@@ -151,6 +209,14 @@ void init(void) // function to init the the robo
   if (button_command_count == 0) {
     on_execute_comm_st = 0;
   }
+
+  if (button_stop_count == 1) //switch to tune state
+  {
+    setLed(255,255,255); // set LED to white
+    machine_state = TUNE_ST;
+    
+  }
+
 }
 
 void readComm(void) // funciton to read movement commands
@@ -166,6 +232,12 @@ void readComm(void) // funciton to read movement commands
   if (button_command_count == 2 and nr_comm != 0) {
     machine_state = START_EXEC_ST;
   }
+
+  if (button_command_count >= 2 && nr_comm == 0) { // reset command button counter if command button is pressed more then one time
+    button_command.resetCount();
+    machine_state= INIT_ST;
+  } // reset
+ 
 }
 
 void startExec(void) // function to start execution of commands
@@ -179,6 +251,10 @@ void startExec(void) // function to start execution of commands
     if (on_execute_comm_st == 1) {
       button_command.resetCount();
     }
+    button_stop_count = 0; // reset button stop counter before going into INIT_ST 
+    button_stop.resetCount(); // reset button stop
+    button_command_count = 0; // reset button stop counter before going into INIT_ST 
+    button_command.resetCount(); // reset button stop
     machine_state = INIT_ST; // set machine state
   }
 
@@ -248,8 +324,8 @@ void turnRight(void) // function to turn right
   {
     startTimer();
 
-    int vel = kspeed * (speedL + val_outputL);
-    int ver = kspeed * (speedR + val_outputR);
+    int vel = kspeed * (turnspeedL + val_outputL) + setpoint_straight_run; // setpoint_straight_run makes sure robo turns accurate
+    int ver = kspeed * (turnspeedR + val_outputR) - setpoint_straight_run;
     MotorControl.motorReverse(0, vel);
     MotorControl.motorForward(1, ver);
 
@@ -281,8 +357,8 @@ void turnLeft(void) // function to turn left
       (abs(encoder2_pos < SETPOINT_TURN)))
   {
     startTimer();
-    int vel = kspeed * (speedL + val_outputL);
-    int ver = kspeed * (speedR + val_outputR);
+    int vel = kspeed * (turnspeedL + val_outputL) + setpoint_straight_run; // setpoint_straight_run makes sure robo turns accurate
+    int ver = kspeed * (turnspeedR + val_outputR) - setpoint_straight_run;
     MotorControl.motorForward(0, vel);
     MotorControl.motorReverse(1, ver);
 
@@ -314,8 +390,8 @@ void forward(void) // function to drive forwards
       (abs(encoder2_pos) < SETPOINT_RUN)) {
     startTimer();
 
-    int vel = kspeed * (speedL + val_outputL);
-    int ver = kspeed * (speedR + val_outputR);
+    int vel = kspeed * (speedL + val_outputL) + setpoint_straight_run; // setpoint_straight_run -> make sure robo goes straight
+    int ver = kspeed * (speedR + val_outputR) - setpoint_straight_run;
     MotorControl.motorReverse(0, vel);
     MotorControl.motorReverse(1, ver);
 
@@ -347,8 +423,8 @@ void back(void) // function to drive backwards
       (abs(encoder2_pos) < SETPOINT_RUN)) {
     startTimer();
 
-    int vel = kspeed * (speedL + val_outputL);
-    int ver = kspeed * (speedR + val_outputR);
+    int vel = kspeed * (speedL + val_outputL) + setpoint_straight_run; // setpoint_straight_run -> make sure robo goes straight
+    int ver = kspeed * (speedR + val_outputR) - setpoint_straight_run;
     MotorControl.motorForward(0, vel);
     MotorControl.motorForward(1, ver);
 
@@ -404,6 +480,102 @@ void wait(void) // function to wait
   stopExec(); // stop current execution 
 }
 
+void tune()
+{
+  DEBUG_PRINTLN_FCT("exc read_tune_buttons fct"); //debug print
+  
+  button_right.loop(); //read right button
+
+  if (button_right.isPressed()) {   //check if right button is pressed
+    if (tune_counter_turn+1 < num_setpoint_values_turn) 
+    {
+      tune_counter_turn++; //add 1 to the tune_counter 
+      DEBUG_PRINT_ACT("Tune Counter: ");
+      DEBUG_PRINTLN_ACT(tune_counter_turn);
+      
+      SETPOINT_TURN = setpoint_values_turn[tune_counter_turn];
+      DEBUG_PRINT_ACT("New Setpoint Value: ");
+      DEBUG_PRINTLN_ACT(SETPOINT_TURN);
+      tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
+      DEBUG_PRINTLN_ACT("button right is pressed"); // debug print
+      int brightness = map(tune_counter_turn,0,num_setpoint_values_turn,0,255);
+      pixels.setBrightness(brightness); // adjust brightness of LED for optical user feedback
+      setLed(125, 255, 0);               // set LED to green
+
+     }
+  }
+   
+  button_left.loop(); //read left button
+
+  if (button_left.isPressed()) {   //check if left button is pressed
+    if (tune_counter_turn >=1 && tune_counter_turn <= num_setpoint_values_turn)
+    {
+      tune_counter_turn--; //subtract 1 from the tune_counter 
+      DEBUG_PRINT_ACT("Tune Counter: ");
+      DEBUG_PRINTLN_ACT(tune_counter_turn);
+
+      SETPOINT_TURN = setpoint_values_turn[tune_counter_turn];
+      DEBUG_PRINT_ACT("New Setpoint Value: ");
+      DEBUG_PRINTLN_ACT(SETPOINT_TURN);
+      tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
+      DEBUG_PRINTLN_ACT("button left is pressed"); // debug print
+      int brightness = map(tune_counter_turn,0,num_setpoint_values_turn,0,255);
+      pixels.setBrightness(brightness); // adjust brightness of LED for optical user feedback
+      setLed(125, 255, 0);               // set LED to green
+    }
+  }
+
+  button_forwards.loop(); //read forward button
+
+  if (button_forwards.isPressed()) {   //check if right button is pressed
+    if (tune_counter_move+1 < num_setpoint_values_move) 
+    {
+      tune_counter_move++; //subtract 1 from the tune_counter 
+      DEBUG_PRINT_ACT("Tune Counter: ");
+      DEBUG_PRINTLN_ACT(tune_counter_move);
+      
+      setpoint_straight_run = setpoint_values_move[tune_counter_move];
+      DEBUG_PRINT_ACT("New Setpoint Value: ");
+      DEBUG_PRINTLN_ACT(setpoint_straight_run);
+      tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
+      DEBUG_PRINTLN_ACT("button forwards is pressed"); // debug print
+      int brightness = map(tune_counter_move,0,num_setpoint_values_move,0,255);
+      pixels.setBrightness(brightness); // adjust brightness of LED for optical user feedback
+      setLed(165,42,42);               // set LED to 
+
+     }
+  }
+   
+  button_backwards.loop(); //read forward button
+
+  if (button_backwards.isPressed()) {   //check if right button is pressed
+    if (tune_counter_move >=1 && tune_counter_move <= num_setpoint_values_move)
+    {
+      tune_counter_move--; //add 1 to the tune_counter 
+      DEBUG_PRINT_ACT("Tune Counter: ");
+      DEBUG_PRINTLN_ACT(tune_counter_move);
+      
+      setpoint_straight_run = setpoint_values_move[tune_counter_move];
+      DEBUG_PRINT_ACT("New Setpoint Value: ");
+      DEBUG_PRINTLN_ACT(setpoint_straight_run);
+      tone(PIN_SPEAKER,NOTE_C6,100); // play single note for user feedback
+      DEBUG_PRINTLN_ACT("button backwards is pressed"); // debug print
+      int brightness = map(tune_counter_move,0,num_setpoint_values_move,0,255);
+      pixels.setBrightness(brightness); // adjust brightness of LED for optical user feedback
+      setLed(165,42,42);               // set LED to 
+
+     }
+  }
+
+if (button_stop_count == 2) //switch to INIT state
+  {
+    machine_state = INIT_ST;
+    button_stop_count = 0; // reset button stop counter
+    button_stop.resetCount(); // reset button stop
+    pixels.setBrightness(255); // reset brightness of LED after tune state 
+  }
+}
+
 void stop(void) // function that is called between movemnts
 {
   DEBUG_PRINTLN_FCT("exc stop fct"); // debug print
@@ -425,6 +597,9 @@ void fsm(void) // finite state machine
   button_command.loop(); // loop() for button_command
   button_command_count = button_command.getCount(); // get count of how often command button was pressed
   
+  button_stop.loop();
+  button_stop_count = button_stop.getCount();
+
   DEBUG_PRINT_VAR("button_command_count: "); // debug print
   DEBUG_PRINTLN_VAR(button_command_count); // debug print
   
@@ -479,7 +654,7 @@ void fsm(void) // finite state machine
 
   case TUNE_ST: // execute tune state 
     last_machine_state = machine_state; // set last machine state
-    //tune(); // function to be written
+    tune(); // tune func
     break;
 
   case WAIT_ST: // execute tune state 
@@ -541,6 +716,10 @@ void setup() // microcontroller setup runs once
 
   // Motor Pins
   MotorControl.attachMotors(25, 26, 32, 33); //ROBOT José trocar 25 por 27
+
+  // Tuning Setup
+  tuningSetupTurn();
+  tuningSetupMove();
 
   machine_state = INIT_ST; // set machine to init state
 }

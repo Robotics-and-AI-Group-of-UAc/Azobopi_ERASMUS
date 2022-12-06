@@ -99,9 +99,6 @@ int stop_next_state;
 
 // PID
 #include "PID_simple.h"
-// SetPoints for PID
-#define SETPOINT_RUN 3900
-#define SETPOINT_TURN 700
 
 unsigned long time_now;
 
@@ -110,10 +107,30 @@ double val_outputR;
 double enc_readL;
 double enc_readR;
 double Setpoint;
-double kp = 0.0001, ki = 0, kd = 0; // changes in ki & kd resulted in strange behaviour
-int    kspeed = 2;
+double kp = 0, ki = 0, kd = 0; // changes in ki & kd resulted in strange behaviour
+int    kspeed = 1;
 volatile int counterPID;
-int freq = 50;
+int freq = 20000;
+
+// tune turn movement
+#define num_setpoint_values_turn 7 // number of possible tuning setpoints in equivalent distances
+int setpoint_values_turn[num_setpoint_values_turn];
+int setpoint_turn_min = 600;
+int setpoint_turn_max = 900;
+int tune_counter_turn;
+int SETPOINT_TURN; 
+
+// tune forward/backward movement regarding differences in motors
+#define num_setpoint_values_move 7 // number of possible tuning setpoints in equivalent distances
+float setpoint_values_move[num_setpoint_values_move];
+float setpoint_move_min = -2.00;
+float setpoint_move_max = 2.00;
+int tune_counter_move;
+// initial straight run
+float setpoint_straight_run;     // increase to go right 
+
+// SetPoints for PID
+#define SETPOINT_RUN 3900 // to be replaced as integers 
 
 // Encoders Interrupt function variables and table
 volatile double encoder1_pos;
@@ -127,11 +144,15 @@ int  encoder_table[] = { 0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0 };
 ESP32MotorControl MotorControl = ESP32MotorControl();
 
 // initial motor speed
-int speedL = 24.98; // because azobopi floated to right side     
-int speedR = 25;
+int speedL = 60; // because azobopi floated to right side     
+int speedR = 60;
+
+// motor speed for turning -> set lower fixed speed for turning
+int turnspeedL = 60;
+int turnspeedR = 60;
 
 // time motors are stopped
-#define STOP_DELAY 500
+#define STOP_DELAY 1000
 #define WAIT_DELAY 2000 // time the robo is waiting in delay state
 unsigned long time_wait; // waiting timer
 bool reset_time_wait = 1; // bool to reset waiting timer
