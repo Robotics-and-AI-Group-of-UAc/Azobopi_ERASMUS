@@ -483,7 +483,8 @@ void wait(void) // function to wait
 void tune()
 {
   DEBUG_PRINTLN_FCT("exc read_tune_buttons fct"); //debug print
-  
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
   button_right.loop(); //read right button
 
   if (button_right.isPressed()) {   //check if right button is pressed
@@ -501,7 +502,6 @@ void tune()
       int brightness = map(tune_counter_turn,0,num_setpoint_values_turn,0,255);
       pixels.setBrightness(brightness); // adjust brightness of LED for optical user feedback
       setLed(125, 255, 0);               // set LED to green
-
      }
   }
    
@@ -567,6 +567,16 @@ void tune()
      }
   }
 
+  display.clearDisplay();
+  display.setCursor(10, 10);
+  display.print("Straight: ");
+  display.println(setpoint_straight_run);
+  display.setCursor(10, 20);
+  display.print("Degree  : ");
+  display.print(SETPOINT_TURN);
+  display.display();
+
+
 if (button_stop_count == 2) //switch to INIT state
   {
     machine_state = INIT_ST;
@@ -576,7 +586,7 @@ if (button_stop_count == 2) //switch to INIT state
   }
 }
 
-void stop(void) // function that is called between movemnts
+void stop(void) // function that is called between movements
 {
   DEBUG_PRINTLN_FCT("exc stop fct"); // debug print
   DEBUG_PRINTLN_ACT("stop"); // debug print
